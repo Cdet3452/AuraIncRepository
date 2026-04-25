@@ -641,42 +641,92 @@ task.spawn(function()
 			local data = GameManager.GetData(uid)
 			local runtime = GameManager.GetRuntime(uid)
 			if not data or not runtime then continue end
+
 			local dt = tickInterval * GetAFKSpeed(runtime) * GetMutationSpeedMult(data) * (AdminConfig.MutationSpeedMultiplier or 1)
+
+			-- 1. Initialize our batch for this specific tick
+			local mutationBatch = {}
+
 			for cubeId, cube in pairs(runtime.cubes) do
+				-- 2. Store the value before any mutations happen
+				local oldMutatedValue = MutationConfig.GetMutatedValue(cube)
+				local mutated = false
+
 				local prev = cube.effectiveElapsed
 				cube.effectiveElapsed += dt
 				local pl = MutationConfig.GetValueBonusLevel(prev)
 				local nl = MutationConfig.GetValueBonusLevel(cube.effectiveElapsed)
+
 				if nl > pl then
+					mutated = true
 					local be = MutationConfig.ValueBonuses[nl]
-					CubeMutated:FireClient(player, { cubeId=cubeId, mutationType="valueBonus",
-						bonusLevel=nl, bonusPercent=be and math.floor(be.bonus*100) or 0 })
+					-- Add to batch instead of firing immediately
+					table.insert(mutationBatch, { 
+						cubeId = cubeId, 
+						mutationType = "valueBonus",
+						bonusLevel = nl, 
+						bonusPercent = be and math.floor(be.bonus * 100) or 0 
+					})
 				end
+
 				local maxTier = AdminConfig.MutationMaxTierIndex or 3
 				local upgrades = 0
+
 				while cube.tierIndex < maxTier and cube.tierIndex < #TierConfig.Tiers and upgrades < 5 do
 					local timeSince = cube.effectiveElapsed - (cube.lastUpgradeElapsed or 0)
 					local bestChance, bestTime = 0, 0
+
 					for _, threshold in ipairs(MutationConfig.TierUpgrades) do
-						if timeSince >= threshold.time then bestChance=threshold.chance; bestTime=threshold.time end
+						if timeSince >= threshold.time then 
+							bestChance = threshold.chance
+							bestTime = threshold.time 
+						end
 					end
+
 					if bestChance <= 0 then break end
+
 					if math.random() <= bestChance then
 						local oldTier = TierConfig.Tiers[cube.tierIndex]
 						cube.tierIndex += 1
 						local newTier = TierConfig.Tiers[cube.tierIndex]
+
 						cube.baseValue = math.floor(cube.baseValue * (newTier.multiplier/oldTier.multiplier))
-						cube.color=newTier.color; cube.glow=newTier.glow; cube.tierName=newTier.name
+						cube.color = newTier.color
+						cube.glow = newTier.glow
+						cube.tierName = newTier.name
 						cube.lastUpgradeElapsed = (cube.lastUpgradeElapsed or 0) + bestTime
 						upgrades += 1
-						CubeMutated:FireClient(player, { cubeId=cubeId, mutationType="tierUpgrade",
-							newColor=newTier.color, newGlow=newTier.glow, tierName=newTier.name })
+						mutated = true
+
+						-- Add to batch instead of firing immediately
+						table.insert(mutationBatch, { 
+							cubeId = cubeId, 
+							mutationType = "tierUpgrade",
+							newColor = newTier.color, 
+							newGlow = newTier.glow, 
+							tierName = newTier.name 
+						})
+
 						if newTier.name == "Legendary" then
 							data.totalLegendaryCubes = (data.totalLegendaryCubes or 0) + 1
 						end
-					else break end
+					else 
+						break 
+					end
+				end
+
+				-- 3. Calculate the delta and apply it to the running total
+				if mutated then
+					local newMutatedValue = MutationConfig.GetMutatedValue(cube)
+					runtime.totalMutatedValue = (runtime.totalMutatedValue or 0) + (newMutatedValue - oldMutatedValue)
 				end
 			end
+
+			-- 4. Send the entire batch in ONE RemoteEvent
+			if #mutationBatch > 0 then
+				ReplicatedStorage.RemoteEvents.CubeMutatedBatch:FireClient(player, mutationBatch)
+			end
+
 			SendHUDUpdate(player)
 		end
 	end
@@ -1780,7 +1830,7 @@ local ServerScriptService = game:GetService("ServerScriptService")
 
 local AdminConfig = require(ReplicatedStorage.Modules.AdminConfig)
 local GameManager = require(ServerScriptService.GameManager)
-
+local BoostConfig = require(ReplicatedStorage.Modules.BoostConfig) -- ADD THIS
 local function GetOrCreate(name)
 	local existing = ReplicatedStorage.RemoteEvents:FindFirstChild(name)
 	if existing then return existing end
@@ -1823,13 +1873,12 @@ end
 ---------------------------------------------------------------
 -- ADDITIVE multiplier helper
 -- Returns: 1 + (bonus_per_stack) * activeCount
--- Example: 2x boost, 3 stacks ? 1 + 1×3 = 4x  (not 8x)
+-- Example: 2x boost, 3 stacks → 1 + 1×3 = 4x  (not 8x)
 ---------------------------------------------------------------
 local function AdditiveMultiplier(uid, boostId)
 	PruneExpired(uid)
-	local cfg    = AdminConfig.Boosts and AdminConfig.Boosts[boostId]
-	if not cfg then return 1 end
-	local bonus  = (cfg.multiplier or 2) - 1   -- bonus per stack (e.g. 2x ? bonus = 1)
+	local cfg = BoostConfig.Get(boostId) -- NEW	if not cfg then return 1 end
+	local bonus  = (cfg.multiplier or 2) - 1   -- bonus per stack (e.g. 2x → bonus = 1)
 	local count  = GetActiveStacks(uid, boostId)
 	return 1 + bonus * count
 end
@@ -1850,12 +1899,18 @@ function BoostManager.GetValueMultiplier(uid)
 	return AdditiveMultiplier(uid, "SpawnBoost")
 end
 
+
+
+function BoostManager.IsActive(uid, boostId)
+	return GetActiveStacks(uid, boostId) > 0
+end
+
 -- Soul aura multiplier (SoulBoost, max 1 active — no stacking needed)
 function BoostManager.GetSoulMultiplier(uid)
 	PruneExpired(uid)
 	local stacks = activeStacks[uid] or {}
 	local now    = tick()
-	local cfg    = AdminConfig.Boosts and AdminConfig.Boosts.SoulBoost
+	local cfg = BoostConfig.Get("SoulBoost") -- Changed boostId to the string "SoulBoost"
 	for _, entry in ipairs(stacks) do
 		if entry.boostId == "SoulBoost" and entry.endsAt > now then
 			return cfg and cfg.multiplier or 2
@@ -1863,11 +1918,6 @@ function BoostManager.GetSoulMultiplier(uid)
 	end
 	return 1
 end
-
-function BoostManager.IsActive(uid, boostId)
-	return GetActiveStacks(uid, boostId) > 0
-end
-
 ---------------------------------------------------------------
 -- Build state payload for client
 ---------------------------------------------------------------
@@ -1916,7 +1966,7 @@ BuyBoost.OnServerEvent:Connect(function(player, boostId)
 	local data = GameManager.GetData(uid)
 	if not data then return end
 
-	local cfg  = AdminConfig.Boosts and AdminConfig.Boosts[boostId]
+	local cfg = BoostConfig.Get(boostId) -- NEW
 	if not cfg then warn("[BoostManager] Unknown boost:", boostId); return end
 
 	local cost = cfg.cost or 0
@@ -1941,7 +1991,7 @@ ActivateBoost.OnServerEvent:Connect(function(player, boostId)
 	local data = GameManager.GetData(uid)
 	if not data then return end
 
-	local cfg = AdminConfig.Boosts and AdminConfig.Boosts[boostId]
+	local cfg = BoostConfig.Get(boostId)
 	if not cfg then return end
 
 	data.boostInventory = data.boostInventory or {}
