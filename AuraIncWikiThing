@@ -1,0 +1,531 @@
+
+Aura Inc — Game Design Document
+
+Overview
+
+Aura Inc is a Roblox idle/clicker game inspired by Egg Inc. Players tap and hold to produce glowing auras that fall into habitats (storage pits). Each aura has a chance to mutate, gaining RNG-driven rarity tiers that multiply its sell value. When habitats fill up, trucks and trains haul auras to a delivery zone, converting them into currency. Players spend that currency on research upgrades, better habitats, and eventually prestige for soul-based multipliers.
+
+Core Loop
+
+Click/Hold → Produce auras → They fall into habitats
+Habitats fill → Truck/train departs → Currency earned
+Spend currency → Buy research upgrades → Produce faster/better auras
+Prestige → Reset with Soul Egg multiplier → Everything scales higher
+
+Aura Mechanics
+
+Production
+
+Player holds a button to produce auras at a base rate (e.g., 1 aura/second)
+Upgrades increase: drop rate, aura size (value multiplier), and auto-drop rate
+Each aura spawns as a 3D block and physically falls into a habitat
+
+Mutation System (RNG Tiers)
+
+Each aura rolls for a rarity on spawn:
+
+
+Economy & Upgrades
+
+Research Tree (Phase 1 Upgrades)
+
+Aura Drop Rate — +0.5 auras/sec per level (cost scales x2.5)
+Block Value — +20% base aura value per level
+Block Size — Increases aura physical size (aesthetic + small value buff)
+Habitat Capacity — +10% storage per level
+Auto-Shipper — Reduces truck turnaround time
+
+Prestige System (Soul Auras)
+
+On prestige, player earns Soul Auras based on total earnings
+Formula: Soul Auras = floor(0.1 * totalEarnings ^ 0.14)
+Each Soul Aura = +10% permanent multiplier to all production
+Players keep: Soul Auras, prestige count, any purchased Prestige Upgrades
+Players reset: regular currency, research levels, habitat fill
+
+Progression Phases (Player Journey)
+
+Early Game (0–1 hour)
+
+Unlock first habitat, learn clicking mechanic
+First truck shipment moment (satisfying "aha")
+Purchase first 3 research upgrades
+
+Mid Game (1–5 hours)
+
+Discover first Rare mutation (wow moment)
+Unlock second habitat type
+Begin automation (first auto-clicker upgrade)
+Consider first prestige
+
+Late Game (5+ hours)
+
+Multiple prestige cycles
+Legendary aura discovery
+Full automation — idle production while offline
+Social features: leaderboard climbing
+
+Technical Architecture (Roblox / Luau)
+
+Script Structure
+
+ServerScriptService/
+  GameManager (server) — DataStore, global state
+  AuraSpawner (server) — spawn logic, RNG rolls
+  ShippingManager (server) — truck/train logic
+  UpgradeManager (server) — research purchase validation
+
+ReplicatedStorage/
+  RemoteEvents/ — PlayerUpgrade, ShipAuras, AuraSpawned
+  Modules/ — TierConfig, UpgradeConfig, PrestigeFormula
+
+StarterGui/
+  MainHUD — currency, rate, capacity bar
+  ResearchUI — upgrade tree
+  PrestigeUI — soul aura calculator
+
+StarterPlayerScripts/
+  ClickHandler — fires RemoteEvent to server on hold
+  UIController — updates HUD every 0.5s
+
+DataStore Schema
+
+PlayerData = {
+  currency = 0,
+  totalEarned = 0,
+  soulAuras = 0,
+  prestigeCount = 0,
+  upgrades = {
+    dropRate = 0,
+    blockValue = 0,
+    habitatCapacity = 0,
+    autoShipper = 0,
+  },
+  settings = {
+    sfxEnabled = true,
+    musicEnabled = true,
+  }
+}
+
+Balancing Notes
+
+Early upgrades should feel cheap and fast to buy (dopamine loop)
+First prestige should happen naturally around 30–60 min of play
+Legendary aura should feel genuinely rare — player should remember their first one
+Auto-clicker should NOT make active play feel pointless — active clicking always faster than idle
+
+Art Style
+
+Clean, glowing, minimalist aesthetic
+Aura blocks: simple cubes with colored point lights + bloom
+Habitats: stone pits with glass covers that fill visually
+Trucks/trains: low-poly cartoon style
+UI: dark background, gold/white text, progress bars with glow effects
+
+Last updated: March 2026
+
+
+Aura Inc — Economy & Progression Design
+
+Core Philosophy
+
+The game should reward all three player types fairly without any one style completely dominating:
+
+Active players — clicking constantly, chasing Legendary rolls, high volume shipping
+Passive/AFK players — letting cubes mutate over time, maximizing value per cube, big infrequent payouts
+Macro/Long session players — acceptable advantage but capped so free casual players aren't completely left behind
+
+Cube Mutation System (Option C — Confirmed Direction)
+
+Cubes sitting in the habitat increase in value over time rather than earning direct passive cash.
+
+Mutation Tiers Over Time
+
+
+Key Rules
+
+Mutation applies on TOP of the spawned tier — a lucky Epic that sits for 10 min becomes even more valuable
+Legendary cubes cannot mutate further in tier but still gain value bonuses over time
+Platform payout reflects the current mutated value of collected cubes, not the spawn value
+Cubes that get collected by a platform take their current mutation value with them
+
+Active vs Passive Balance
+
+Active Player Loop
+
+Click fast → high volume of cubes → more chances at rare RNG rolls → ship frequently for steady income
+Upgrades: Drop Rate, Block Value, Platform Capacity, Ship Interval reduction
+Reward: More cubes = more lottery tickets for Legendary spawns
+
+Passive/AFK Player Loop
+
+Let cubes sit and mutate → fewer but much higher value cubes → infrequent massive payouts
+Upgrades: Mutation Speed, Mutation Tier Chance, Habitat Capacity (hold more cubes longer)
+Reward: A box full of mutated Epics and Legendaries is worth far more than fresh Commons
+
+Why Neither Dominates
+
+Active players ship more often but at lower average cube value
+Passive players ship rarely but at much higher average cube value
+Total earnings over time should be roughly equal with different upgrade paths
+Both feel satisfying in different ways — active is exciting, passive is rewarding
+
+AFK / Macro Abuse Prevention
+
+The Problem
+
+AFK players leaving devices on 24/7 would accumulate mutated Legendaries non-stop
+Macro players auto-clicking would generate unlimited high-volume shipping income
+This creates an unbridgeable gap between casual and hardcore players
+
+The Solution — Diminishing Returns Over Time
+
+Inspired by Egg Inc's offline earnings cap:
+
+Mutation speed slows down significantly after 30 minutes of inactivity
+First 30 min: full mutation speed
+30 min to 2 hours: 50% mutation speed
+2+ hours: 10% mutation speed (nearly stopped)
+This means AFK overnight gives maybe 3-4x the value of a 30 min session, not 20x
+Habitat has a hard capacity cap
+Once the habitat is full, no new cubes can spawn and mutation stops
+Forces even AFK players to check in and ship occasionally
+Upgrading habitat capacity is a meaningful choice — more room = longer AFK sessions
+Macro protection — server-side rate limiting already in place
+AdminConfig.FireRate enforced server-side so macros clicking faster than the cap get ignored
+Consider adding a per-session click diminishing return (after 10 min of continuous clicking, drop rate reduces slightly)
+
+Piggy Bank System (Monetization)
+
+The Problem with Egg Inc's Version
+
+Breaking the piggy bank gives too large an advantage
+Free players feel like they can never catch up to paying players
+The gap compounds over time as paying players use their advantage to progress faster
+
+Aura Inc's Version — Friendlier Piggy Bank
+
+The piggy bank fills passively over time just by playing (not just by paying)
+Free players can break it too — it just takes longer to fill without premium
+Premium players get a bigger bank and it fills faster — meaningful advantage but not game-breaking
+
+
+Key Rules
+
+Free bank breaks should feel genuinely rewarding — not a consolation prize
+Premium bank should never give more than ~3-4x the free bank value at equivalent play time
+No pay-to-win on core mechanics (drop rates, mutation speed) — cosmetics and QoL only for Robux
+
+Research Trees (Phase 4)
+
+Active Research Branch
+
+
+Passive Research Branch
+
+
+Luck Research Branch (Epic Research equivalent)
+
+
+Last updated: March 2026
+Aura Inc — Economy & Progression Design
+
+Core Philosophy
+
+The game should reward all three player types fairly without any one style completely dominating:
+
+Active players — clicking constantly, chasing Legendary rolls, high volume shipping
+Passive/AFK players — letting cubes mutate over time, maximizing value per cube, big infrequent payouts
+Macro/Long session players — acceptable advantage but capped so free casual players aren't completely left behind
+
+Passive Income System (Updated Direction)
+
+Passive income pays out 100% of current cube value per tick. No passive rate reduction.
+
+Why the Reduction Was Removed
+
+The original PassiveRate = 0.50 was a placeholder to differentiate passive vs active playstyles
+The Cube Mutation System (Phase 2) already handles this balance naturally — passive players earn more per cube because cubes mutate and gain value over time
+The flat reduction was redundant, confusing, and even the developer couldn't tell it was working correctly without checking the math manually
+Removing it makes the system transparent and honest — what the rate label shows is exactly what you earn
+
+Passive Tick Speed Upgrade (Replaces Passive Rate Upgrade)
+
+Instead of upgrading from 50% to 100% passive rate, the research upgrade becomes:
+
+Passive Tick Speed — ticks happen more frequently (e.g. every 5s → every 3s → every 1s)
+This is a cleaner, more understandable upgrade — faster ticks = more frequent payouts
+Ties into the Passive Research Branch in Phase 4
+
+Cube Mutation System (Phase 2 — Confirmed Direction)
+
+Cubes sitting in the habitat increase in value over time. Platform payout reflects mutated value at collection time.
+
+Mutation Timeline
+
+
+Key Rules
+
+Mutation applies on top of spawned tier — a lucky Epic sitting 10 min becomes even more valuable
+Legendary cubes cannot upgrade tier but still gain value bonuses
+Platform payout reflects current mutated value at collection time
+Ties into Passive Tick Speed and Mutation research upgrades in Phase 4
+
+Active vs Passive Balance
+
+Active Player Loop
+
+Click fast → high volume of cubes → more chances at rare RNG rolls → ship frequently for steady income
+Hold longer → ramp up hold multiplier to 5x earnings and max luck bonus
+Upgrades: Drop Rate, Block Value, Platform Capacity, Ship Interval reduction, Hatchery Capacity
+
+Passive/AFK Player Loop
+
+Let cubes sit and mutate → fewer but much higher value cubes → infrequent massive payouts
+Passive income ticks pay out 100% of current cube value on every tick
+Upgrades: Mutation Speed, Mutation Tier Chance, Habitat Capacity, Passive Tick Speed
+
+Why Neither Dominates
+
+Active players ship more often but at lower average cube value
+Passive players ship rarely but at much higher average cube value
+Both earn roughly equal over time with different upgrade paths
+Both feel satisfying — active is exciting and lottery-driven, passive is rewarding and strategic
+
+AFK / Macro Abuse Prevention
+
+Already Implemented
+
+Server-side FireRate cap prevents macro clicking faster than the limit
+Hatchery system limits how long players can hold before needing to wait for refill
+
+To Implement (Phase 2)
+
+Mutation speed diminishing returns after 30 min inactivity
+First 30 min: full mutation speed
+30 min to 2 hours: 50% mutation speed
+2+ hours: 10% mutation speed
+Habitat hard capacity cap — once full, no new cubes spawn and mutation stops
+Per-session click diminishing return (after 10 min continuous clicking, drop rate reduces slightly)
+
+Piggy Bank System (Phase 2)
+
+A fairer version of Egg Inc's piggy bank that free players can also break through gameplay.
+
+
+Rules
+
+Free bank break should feel genuinely rewarding, not a consolation prize
+Premium bank never gives more than 3-4x free bank value at equivalent play time
+No Robux purchases for core mechanics — only cosmetics and QoL
+Bank fills passively just by playing
+
+Research Trees (Phase 4)
+
+Active Research Branch
+
+
+Passive Research Branch
+
+
+Luck Research Branch (Epic Research equivalent)
+
+
+Last updated: March 2026
+
+Balance Branch — Third Playstyle (Phase 4)
+
+Who This Player Is
+
+Players who are semi-AFK, doing schoolwork, or running a light autoclicker. They click more than pure passive but never build up to max hold multiplier. Currently they get a watered-down version of both Active and Passive with no dedicated advantage.
+
+Design Problem
+
+Without dedicated mechanics, Balance players are just worse at everything — they never hit 5x multiplier, and they never let cubes sit long enough for full passive benefit. They need their own advantage that rewards consistent moderate engagement rather than peak engagement or pure patience.
+
+Candidate Mechanics (to decide in Phase 4)
+
+Streak System — consecutive hatchery cycles without going fully idle give a stacking streak bonus
+Hybrid Rate Formula — research that scales off BOTH active rate and passive count: bonus = sqrt(activeRate * passiveRate) — peaks when both are moderate
+Tempo Bonus — combo meter that builds when producing within a target rate window (not too fast, not too slow)
+Autoclicker Legitimization — official auto-click research upgrade that keeps player permanently in 1.5x-2x multiplier range, acknowledging the semi-AFK demographic fairly
+
+Key Design Principle
+
+Should NOT require being at the device constantly (that's Active)
+Should require MORE engagement than pure AFK (that's Passive)
+Rewards checking in every few minutes rather than every few seconds or never
+Autoclicker players are a valid demographic — lean into it rather than fight it
+
+Added end of Phase 1 — to be designed and implemented in Phase 4
+
+Balance Test Results — Confirmed Working Config
+
+Config Used
+
+AdminConfig.FireRate = 0.1
+AdminConfig.BaseAuraValue = 1
+AdminConfig.BaseHabitatCapacity = 100
+AdminConfig.ShipInterval = 6
+AdminConfig.PlatformCapacity = 25
+AdminConfig.MaxTrucks = 3
+AdminConfig.PassiveInterval = 10
+AdminConfig.HoldMultipliers = {
+    { time = 0, multiplier = 1.0, luckBonus = 0    },
+    { time = 1, multiplier = 1.5, luckBonus = 0.05 },
+    { time = 2, multiplier = 2.0, luckBonus = 0.10 },
+    { time = 4, multiplier = 3.0, luckBonus = 0.15 },
+    { time = 7, multiplier = 5.0, luckBonus = 0.20 },
+}
+AdminConfig.HatcheryMax = 200
+AdminConfig.HatcheryDrainRate = 15
+AdminConfig.HatcheryRefillRate = 10
+
+Results After 1 Minute
+
+
+Analysis
+
+Chance is now clearly ahead — ~58% more earnings after 1 minute
+Habitat cap naturally limits passive from running away exponentially
+Passive rate label turning red when habitat full is working as intended
+Faster multiplier ramp (Legendary at 7s instead of 20s) is the key fix
+Both playstyles are limited by habitat capacity which creates natural interaction requirement
+Passive rate was $679/10s at habitat full — respectable but can't grow further without shipping
+Chance rate was only $250/10s passive but platform payouts made up the difference
+
+Remaining Concern
+
+Over very long sessions (30+ min) passive may still catch up because:
+
+Passive players have a higher rate per cube sitting
+They never waste hatchery on low-value early cubes
+They only ship when habitat is full so each platform carries max value
+This is acceptable by design — passive rewards patience, chance rewards engagement.
+
+This Config Is the Recommended Starting Point for Phase 2
+
+Egg Inc Reference — Mechanics for Aura Inc
+
+This document is a cleaned, condensed reference of Egg Inc mechanics relevant to Aura Inc development. Use this to inform design decisions without needing to re-read the full wiki.
+
+Boosts System
+
+Temporary purchasable bonuses activated by the player. Core to late-game engagement and the prestige loop.
+
+Boost Types (Egg Inc)
+
+
+Critical Boost Rules (from wiki)
+
+Max 2 boosts active at once by default (Pro Permit expands to 5)
+Boost Beacons stack ADDITIVELY, not multiplicatively
+Bird Feed, Prisms, and Soul Beacons do NOT compound with themselves (2x Bird Feed = 100x earnings, not 2500x)
+Soul Beacons multiply the INPUT to the Soul Egg formula, not the output directly — real effect at 5x is ~1.40x actual SE gain (0.21 exponent)
+Boosts cannot be activated in Contracts
+Boosts can be cancelled but are NOT refunded
+Buying a boost adds 25 GE to the Piggy Bank
+
+Aura Inc Equivalents Planned (Phase 3)
+
+
+Prestige System
+
+Soul Egg Formula (Egg Inc)
+
+SoulEggs = floor(totalBocks^0.21 * constant)
+
+Aura Inc Version (confirmed Phase 2)
+
+NewSoulAuras = floor(totalEarned^0.25 * 0.14)
+
+The exponent difference (0.21 vs 0.25) makes Aura Inc prestige slightly more rewarding per run at mid-game ranges, which fits the faster-paced Roblox session length.
+
+What Resets vs Survives (Egg Inc pattern — Aura Inc mirrors this)
+
+
+Eggs of Prophecy (Aura Inc: Prophecy Auras — Phase 3/4)
+
+Exponential multiplier on top of soul egg bonus
+Egg Inc formula: EarningsBonus = (1 + SA_bonus) ^ EoP_count
+These are the "end game chase" — extremely hard to get, insane payoff
+Aura Inc: Save for Phase 3/4, do not implement in Phase 3 unless time allows
+
+Research System
+
+Egg Inc Structure
+
+Tier 1 (Common Research) — cheap, many levels, resets on prestige. Examples: Comfortable Nests, Nutritional Supplements, Better Incubators
+Tier 2 (Epic Research) — expensive (Golden Eggs), permanent across prestiges, few levels. Examples: Epic Hatchery, Soul Food, Prestige Bonus
+Each tier has ~15-20 research items across categories
+
+Key Epic Research items relevant to Aura Inc
+
+
+Aura Inc Research Plan (Phase 3)
+
+Common Research (resets on prestige): Block Value, Habitat Size, Hatchery Size, Mutation Speed, Passive Tick — ALREADY BUILT
+Epic Research (permanent): Phase 3 flagship — tier ceiling unlocks, permanent SA bonus, hatchery permanents
+Data-driven config table approach confirmed (ClickUp task: "Design upgrade config table")
+
+Piggy Bank
+
+Egg Inc Version
+
+Fills passively from purchases (vehicles add 20 GE, boosts add 25 GE, research adds GE)
+Free players can smash it for a small reward
+Premium players buy it with real money for a larger reward
+One-time smash — it refills after breaking
+
+Aura Inc Version (planned Phase 3)
+
+
+Key rule: Free break must feel genuinely rewarding, not a consolation prize.
+
+Vehicles (Shipping)
+
+Egg Inc Pattern
+
+12 vehicle tiers from Trike → Hyperloop Train
+Each vehicle purchase adds GE to Piggy Bank
+Shipping depot shows capacity bar (green → yellow → red as you approach cap)
+Warning message when approaching/exceeding cap
+
+Aura Inc Current State
+
+3 trucks (MaxTrucks), fixed capacity
+TruckSpawn/TruckDestination in Workspace
+ShipInterval = 6s, PlatformCapacity = 25
+No upgrade tiers yet — single vehicle type
+
+Phase 3 Shipping Polish (task: "Shipping and Delivery System")
+
+Visual improvements to truck animation
+Shipping capacity warning system (mirrors Egg Inc's bar)
+Potential groundwork for vehicle upgrade tiers in Phase 4
+
+Challenges (Egg Inc) → Tier Collection Challenges (Aura Inc)
+
+Egg Inc Pattern
+
+Challenges are in-game quests that reward Bocks, Soul Eggs, or Golden Eggs
+Examples: "Research 30 things", "Lay eggs worth $300,000", "75K chickens"
+Do NOT reset on prestige
+Some completable in contract farms
+
+Aura Inc Planned Version (Phase 3/4)
+
+"Fill habitat with 50 Uncommon cubes" → big reward
+"Ship 10 Rare cubes in one platform" → unlock next tier ceiling
+"Hold a full habitat of [current max tier] for 5 minutes" → prestige bonus
+Designed in Economy doc under "Tier Ceiling as Core Progression"
+
+Drones (Egg Inc — NOT planned for Aura Inc)
+
+Golden Egg tap rewards from flying drones. Not equivalent to any Aura Inc mechanic. Could be a Phase 4 "bonus tap event" but no plans currently.
+
+Spaceships / Artifacts / Eggfinity Stones (NOT planned)
+
+Full late-game system for Egg Inc. Too complex and too different from Aura Inc's identity. Not in scope for any current phase.
+
+Last updated: March 2026 — Phase 3 start
