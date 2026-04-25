@@ -4252,7 +4252,7 @@ ShopButton.BackgroundColor3=T.buttonSecondary; ShopButton.BorderSizePixel=0
 ShopButton.Text="Shop"; ShopButton.TextColor3=T.bodyText
 ShopButton.TextScaled=true; ShopButton.Font=T.font
 ShopButton.ZIndex=5; ShopButton.Parent=mainHUD
-ShopButton:SetAttribute("TutorialTarget", "ShopBtn")
+ShopButton:SetAttribute("TutorialTarget", "ShopButton")
 Instance.new("UICorner",ShopButton).CornerRadius=UDim.new(0,6)
 
 ---------------------------------------------------------------
