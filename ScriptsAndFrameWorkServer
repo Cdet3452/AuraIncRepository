@@ -612,8 +612,7 @@ local function SendHUDUpdate(player)
 	local data = GameManager.GetData(uid)
 	local runtime = GameManager.GetRuntime(uid)
 	if not data or not runtime then return end
-	local totalMV = 0
-	for _, cube in pairs(runtime.cubes) do totalMV += MutationConfig.GetMutatedValue(cube) end
+	local totalMV = runtime.totalMutatedValue or 0
 	local pending = runtime.cubeCount
 	local avgVal  = pending > 0 and (totalMV/pending) or AdminConfig.BaseAuraValue
 	local rate    = math.floor(pending * avgVal)
@@ -2038,7 +2037,6 @@ task.spawn(function()
 end)
 
 return BoostManager
-
 GameManager:
 -- GameManager
 -- Location: ServerScriptService > GameManager (ModuleScript)
