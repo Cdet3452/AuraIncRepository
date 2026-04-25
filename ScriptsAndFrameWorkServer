@@ -1150,10 +1150,8 @@ while true do
 		if playerTimers[uid] >= interval then
 			playerTimers[uid] = 0
 
-			local totalMutatedValue = 0
-			for _, cube in pairs(runtime.cubes) do
-				totalMutatedValue = totalMutatedValue + MutationConfig.GetMutatedValue(cube)
-			end
+			-- No more looping! Instant O(1) lookup.
+			local totalMutatedValue = runtime.totalMutatedValue
 
 			local passiveEarned = math.floor(totalMutatedValue)
 			if passiveEarned <= 0 then continue end
@@ -1410,10 +1408,8 @@ local function SendHUDUpdate(player)
 	local runtime = GameManager.GetRuntime(uid)
 	if not data or not runtime then return end
 
-	local totalMutatedValue = 0
-	for _, cube in pairs(runtime.cubes) do
-		totalMutatedValue = totalMutatedValue + MutationConfig.GetMutatedValue(cube)
-	end
+	-- No more looping! Instant O(1) lookup.
+	local totalMutatedValue = runtime.totalMutatedValue
 
 	local pending = runtime.cubeCount
 	local avgValue = pending > 0 and (totalMutatedValue / pending) or AdminConfig.BaseAuraValue
@@ -1531,7 +1527,6 @@ ShipAuras.OnServerEvent:Connect(function(player, action, value)
 		SendHUDUpdate(player)
 	end
 end)
-
 UpgradeManager:
 
 -- UpgradeManager
@@ -2061,6 +2056,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local PlayerDB      = DataStoreService:GetDataStore("PlayerData_v1")
 local AdminConfig   = require(ReplicatedStorage.Modules.AdminConfig)
 local UpgradeConfig = require(ReplicatedStorage.Modules.UpgradeConfig)
+local MutationConfig = require(ReplicatedStorage.Modules.MutationConfig)
 
 local SAVE_COOLDOWN = 7
 
@@ -2128,6 +2124,7 @@ local function DefaultRuntime()
 		cubeOrder      = {},
 		cubeCount      = 0,
 		nextCubeId     = 1,
+		totalMutatedValue = 0, -- NEW: Track the total value instantly
 		lastActiveTime = tick(),
 		sessionStart   = tick(),
 	}
@@ -2357,8 +2354,9 @@ function GameManager.AddCube(uid, cubeRecord)
 	local runtime = PlayerRuntime[uid]
 	if not runtime then return nil end
 	local id = runtime.nextCubeId
-	runtime.nextCubeId += 1
+	runtime.nextCubeId += 1	
 	runtime.cubes[id] = cubeRecord
+	runtime.totalMutatedValue += MutationConfig.GetMutatedValue(cubeRecord)
 	table.insert(runtime.cubeOrder, id)
 	runtime.cubeCount += 1
 	return id
@@ -2383,6 +2381,8 @@ function GameManager.CollectOldestCubes(uid, count)
 				table.insert(collectedCubes, runtime.cubes[cubeId])
 				runtime.cubes[cubeId] = nil
 				runtime.cubeCount -= 1
+				local valToRemove = MutationConfig.GetMutatedValue(runtime.cubes[cubeId])
+				runtime.totalMutatedValue -= valToRemove
 				needed -= 1
 			else
 				table.insert(newOrder, cubeId)
@@ -2392,6 +2392,14 @@ function GameManager.CollectOldestCubes(uid, count)
 	runtime.cubeOrder = newOrder
 	return collected, collectedCubes
 end
+
+game:BindToClose(function()
+	print("[GameManager] Server shutting down. Forcing final save for all players...")
+	for _, player in ipairs(Players:GetPlayers()) do
+		SaveData(player)
+	end
+	task.wait(2) -- Give DataStoreService a moment to flush the queues
+end)
 
 return GameManager
 
