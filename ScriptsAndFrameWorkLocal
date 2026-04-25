@@ -1889,7 +1889,7 @@ Mainmenucontroller:
 -- Camera locks to area-specific "MenuCamPos_N" Parts in Workspace.
 -- Background is blurred using the existing UITheme MenuBlur system.
 -- All sizes/positions driven by UIConfig.MainMenu, all colors from UITheme.
--- Player clicks PLAY ? black fade transition ? camera released ? game begins.
+-- Player clicks PLAY → black fade transition → camera released → game begins.
 --
 -- GATE SYSTEM:
 --   Creates a BindableEvent "MenuDismissed" in ReplicatedStorage.
@@ -2196,7 +2196,7 @@ creditLabel.ZIndex = 10
 creditLabel.Parent = container
 
 ---------------------------------------------------------------
--- BLACK FADE OVERLAY (starts invisible)
+-- LOADING SCREEN OVERLAY (Starts invisible)
 ---------------------------------------------------------------
 local blackFade = Instance.new("Frame")
 blackFade.Name = "BlackFade"
@@ -2207,13 +2207,19 @@ blackFade.BorderSizePixel = 0
 blackFade.ZIndex = 50
 blackFade.Parent = menuScreen
 
----------------------------------------------------------------
--- 4. PLAY BUTTON HANDLER — TRANSITION TO GAMEPLAY
----------------------------------------------------------------
+local loadingText = Instance.new("TextLabel")
+loadingText.Name = "LoadingText"
+loadingText.Size = UDim2.new(1, 0, 0, 50)
+loadingText.Position = UDim2.new(0, 0, 0.5, -25)
+loadingText.BackgroundTransparency = 1
+loadingText.Text = "INITIALIZING SYSTEMS..."
+loadingText.TextColor3 = T.accentBlue or Color3.fromRGB(100, 200, 255)
+loadingText.TextScaled = true
+loadingText.Font = TITLE_FONT
+loadingText.TextTransparency = 1 -- Hidden initially
+loadingText.ZIndex = 51
+loadingText.Parent = blackFade
 
----------------------------------------------------------------
--- 4. PLAY BUTTON HANDLER — TRANSITION TO GAMEPLAY
----------------------------------------------------------------
 playBtn.MouseButton1Down:Connect(function()
 	if hasPlayed then return end
 	hasPlayed = true
@@ -2225,9 +2231,12 @@ playBtn.MouseButton1Down:Connect(function()
 	-- Stop listening for area changes
 	if areaConn then areaConn:Disconnect(); areaConn = nil end
 
-	-- PHASE 1: Fade to black
+	-- PHASE 1: Fade to black and show LOADING text
 	TweenService:Create(blackFade, TweenInfo.new(FADE_IN_TIME, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
 		BackgroundTransparency = 0
+	}):Play()
+	TweenService:Create(loadingText, TweenInfo.new(FADE_IN_TIME), {
+		TextTransparency = 0
 	}):Play()
 	task.wait(FADE_IN_TIME)
 
@@ -2242,22 +2251,25 @@ playBtn.MouseButton1Down:Connect(function()
 		camera.CameraSubject = humanoid
 	end
 
-	-- Disable blur
+	-- Disable blur and show HUD *behind* the black screen
 	UITheme.SetMenuVisible(false)
-
-	-- Show game HUD
 	mainHUD.Enabled = true
 
 	-- Destroy menu visuals behind the black
 	vignette:Destroy()
 	container:Destroy()
 
-	-- Hold on black
-	task.wait(FADE_HOLD_TIME)
+	-- THE LOADING BUFFER: Wait for Roblox to load, then give scripts 2 seconds to safely sync
+	if not game:IsLoaded() then game.Loaded:Wait() end
+	loadingText.Text = "LOADING AURAS..."
+	task.wait(2) 
 
 	-- PHASE 3: Fade out from black to reveal gameplay
 	TweenService:Create(blackFade, TweenInfo.new(FADE_OUT_TIME, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
 		BackgroundTransparency = 1
+	}):Play()
+	TweenService:Create(loadingText, TweenInfo.new(FADE_OUT_TIME), {
+		TextTransparency = 1
 	}):Play()
 	task.wait(FADE_OUT_TIME)
 
@@ -2268,7 +2280,6 @@ playBtn.MouseButton1Down:Connect(function()
 	-- Full cleanup
 	menuScreen:Destroy()
 end)
-
 PlatformController:
 -- PlatformController
 -- Location: StarterPlayer > StarterPlayerScripts > PlatformController
