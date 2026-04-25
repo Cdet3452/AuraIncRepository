@@ -843,7 +843,7 @@ clickStroke.Thickness = 0
 local basePos = ClickButton.Position
 local tiltSide = 1
 
--- ? MILESTONE SYSTEM SETUP
+-- ✨ MILESTONE SYSTEM SETUP
 local Camera = workspace.CurrentCamera
 local defaultFOV = 70 -- Standard Roblox camera FOV
 local lastMilestone = 1
@@ -1036,7 +1036,7 @@ local function PlayVFX(effectName, position, duration)
 	Debris:AddItem(vfx, duration or 1.5)
 end
 
--- ? PROGRESSION STATS (These can be updated later by shop upgrades!)
+-- ✨ PROGRESSION STATS (These can be updated later by shop upgrades!)
 local playerMultSpeed = 1.0  -- 1.0 is base speed
 local playerMaxMult = 5.0    -- The highest tier they can reach
 local baseGrowthPerSecond = 0.8 -- At 0.8, it takes exactly 5 seconds to hit 5.0x
@@ -1091,7 +1091,7 @@ local function SpawnMilestonePopup(multFloor)
 	local pop = Instance.new("TextLabel")
 	pop.Text = data.name .. " (" .. string.format("%.1f", data.mult) .. "x)"
 
-	-- ? THE FONT FIX: Switched to FredokaOne
+	-- ✨ THE FONT FIX: Switched to FredokaOne
 	pop.Font = Enum.Font.FredokaOne 
 
 	pop.TextScaled = true
@@ -1101,7 +1101,7 @@ local function SpawnMilestonePopup(multFloor)
 
 	pop.AnchorPoint = Vector2.new(0.5, 0.5)
 
-	-- ? THE HEIGHT FIX: Changed starting offset from -60 to -120 to sit higher
+	-- ✨ THE HEIGHT FIX: Changed starting offset from -60 to -120 to sit higher
 	pop.Position = UDim2.new(ClickButton.Position.X.Scale, ClickButton.Position.X.Offset, ClickButton.Position.Y.Scale, ClickButton.Position.Y.Offset - 120)
 	pop.Parent = ClickButton.Parent
 
@@ -1111,7 +1111,7 @@ local function SpawnMilestonePopup(multFloor)
 
 	pop.Size = UDim2.new(0, 50, 0, 10) 
 
-	-- ? THE ANIMATION FIX: Increased the upward float distance (-80 higher than start)
+	-- ✨ THE ANIMATION FIX: Increased the upward float distance (-80 higher than start)
 	TweenService:Create(pop, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
 		Size = UDim2.new(0, 250, 0, 50),
 		Position = UDim2.new(pop.Position.X.Scale, pop.Position.X.Offset, pop.Position.Y.Scale, pop.Position.Y.Offset - 80)
@@ -1154,12 +1154,12 @@ local function UpdateButtonVisual()
 		UpdateMultiplier:Fire(mult)
 	end
 
-	-- ? SCREEN EFFECT: Warp speed camera FOV!
+	-- ✨ SCREEN EFFECT: Warp speed camera FOV!
 	local targetFOV = defaultFOV + (mult * 1.2)
 	if not holding then targetFOV = defaultFOV end
 	TweenService:Create(Camera, TweenInfo.new(0.3, Enum.EasingStyle.Sine), {FieldOfView = targetFOV}):Play()
 
-	-- ? BULLETPROOF MILESTONE POPUPS
+	-- ✨ BULLETPROOF MILESTONE POPUPS
 	if holding then
 		if currentTierIndex > lastTierIndex then
 			-- If they upgraded tiers, spawn the popup for the new tier!
@@ -1182,7 +1182,7 @@ local function UpdateButtonVisual()
 		tiltSide = tiltSide * -1 
 
 		if mult >= 5.0 then 
-			-- ? LEGENDARY: Violent alternating rotation (8 degrees)
+			-- ✨ LEGENDARY: Violent alternating rotation (8 degrees)
 			TweenService:Create(ClickButton, TweenInfo.new(0.05, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, 0, true), {
 				Rotation = 8 * tiltSide
 			}):Play()
@@ -1192,7 +1192,7 @@ local function UpdateButtonVisual()
 			clickStroke.Transparency = 0
 			TweenService:Create(clickStroke, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Thickness = 0, Transparency = 1}):Play()
 		else
-			-- ? NORMAL: Gentle alternating tilt (3 degrees)
+			-- ✨ NORMAL: Gentle alternating tilt (3 degrees)
 			TweenService:Create(ClickButton, TweenInfo.new(0.08, Enum.EasingStyle.Sine, Enum.EasingDirection.Out, 0, true), {
 				Rotation = 3 * tiltSide
 			}):Play()
@@ -1330,7 +1330,7 @@ local function EvaluateHolding()
 		holding = true
 		holdStart = tick()
 
-		-- ? TACTILE PRESS: Heavy center squish before the rotations start
+		-- ✨ TACTILE PRESS: Heavy center squish before the rotations start
 		TweenService:Create(clickScale, TweenInfo.new(0.1, Enum.EasingStyle.Sine), {Scale = 0.9}):Play()
 
 		ProduceAura:FireServer("start")
@@ -1413,7 +1413,7 @@ UpdateHUDEvent.OnClientEvent:Connect(function(stats)
 		end
 	end
 
-	-- ? THE FIX: Constantly check upgrades so the client never forgets!
+	-- ✨ THE FIX: Constantly check upgrades so the client never forgets!
 	if stats.upgrades then
 		-- Sync the Mythic Unlock
 		local mythicData = stats.upgrades["unlockMythicMult"]
@@ -1432,7 +1432,7 @@ task.spawn(function()
 	while true do
 		if holding then
 			if hatcheryEmpty or habitatFull then
-				-- ? THE FIX: Properly tell the new input system to stop holding
+				-- ✨ THE FIX: Properly tell the new input system to stop holding
 				table.clear(trackedInputs)
 				EvaluateHolding()
 			else
@@ -1479,76 +1479,78 @@ AuraSpawned.OnClientEvent:Connect(function(info)
 	end
 end)
 
----------------------------------------------------------------
--- 13. CubeMutated
----------------------------------------------------------------
-CubeMutated.OnClientEvent:Connect(function(info)
-	local cubeData = cubeDataMap[info.cubeId]
-	if not cubeData then return end
-	local instance = cubeData.instance
-	if not instance or not instance.Parent then return end
+CubeMutatedBatch.OnClientEvent:Connect(function(batchData)
+	-- Loop through every mutation the server sent in this batch
+	for _, info in ipairs(batchData) do
 
-	local rootPart = GetRootPart(instance)
-	if not rootPart then return end
-	local position = rootPart.Position
+		local cubeData = cubeDataMap[info.cubeId]
+		if not cubeData then continue end -- CHANGED: Use continue instead of return
 
-	if info.mutationType == "tierUpgrade" then
-		PlayVFX("TierUpgrade", position, 1.5)
-		if info.tierName == "Legendary" then
-			PlayVFX("Legendary", position, 2.0)
-		end
+		local instance = cubeData.instance
+		if not instance or not instance.Parent then continue end -- CHANGED
 
-		local oldTierName = cubeData.tierName
-		local newAura = CloneAuraModel(info.tierName)
-		if newAura then
-			newAura:PivotTo(CFrame.new(position))
-			newAura.Parent = workspace
-			newAura:SetAttribute("AuraCube", true)
-			ScaleAura(newAura, info.tierName, true, oldTierName)
+		local rootPart = GetRootPart(instance)
+		if not rootPart then continue end -- CHANGED
+		local position = rootPart.Position
 
-			if newAura.PrimaryPart then
-				newAura.PrimaryPart.Anchored = false
-				newAura.PrimaryPart.CanCollide = true
+		if info.mutationType == "tierUpgrade" then
+			PlayVFX("TierUpgrade", position, 1.5)
+			if info.tierName == "Legendary" then
+				PlayVFX("Legendary", position, 2.0)
 			end
 
-			instance:Destroy()
+			local oldTierName = cubeData.tierName
+			local newAura = CloneAuraModel(info.tierName)
+			if newAura then
+				newAura:PivotTo(CFrame.new(position))
+				newAura.Parent = workspace
+				newAura:SetAttribute("AuraCube", true)
+				ScaleAura(newAura, info.tierName, true, oldTierName)
 
-			cubeData.instance = newAura
-			cubeData.tierName = info.tierName
-			cubeData.isCustom = true
-
-			newAura.AncestryChanged:Connect(function(_, parent)
-				if not parent then cubeDataMap[info.cubeId] = nil end
-			end)
-		else
-			if rootPart:IsA("BasePart") then
-				TweenService:Create(rootPart, TweenInfo.new(0.5, Enum.EasingStyle.Quad), {
-					Color = info.newColor
-				}):Play()
-
-				if info.newGlow then
-					local light = rootPart:FindFirstChildOfClass("PointLight")
-					if not light then
-						light = Instance.new("PointLight")
-						light.Parent = rootPart
-					end
-					TweenService:Create(light, TweenInfo.new(0.5), {
-						Brightness = 3,
-						Range = 8,
-						Color = info.newColor,
-					}):Play()
+				if newAura.PrimaryPart then
+					newAura.PrimaryPart.Anchored = false
+					newAura.PrimaryPart.CanCollide = true
 				end
 
-				ScaleAura(instance, info.tierName, true, oldTierName)
+				instance:Destroy()
+
+				cubeData.instance = newAura
+				cubeData.tierName = info.tierName
+				cubeData.isCustom = true
+
+				newAura.AncestryChanged:Connect(function(_, parent)
+					if not parent then cubeDataMap[info.cubeId] = nil end
+				end)
+			else
+				if rootPart:IsA("BasePart") then
+					TweenService:Create(rootPart, TweenInfo.new(0.5, Enum.EasingStyle.Quad), {
+						Color = info.newColor
+					}):Play()
+
+					if info.newGlow then
+						local light = rootPart:FindFirstChildOfClass("PointLight")
+						if not light then
+							light = Instance.new("PointLight")
+							light.Parent = rootPart
+						end
+						TweenService:Create(light, TweenInfo.new(0.5), {
+							Brightness = 3,
+							Range = 8,
+							Color = info.newColor,
+						}):Play()
+					end
+
+					ScaleAura(instance, info.tierName, true, oldTierName)
+				end
+
+				cubeData.tierName = info.tierName
 			end
 
-			cubeData.tierName = info.tierName
+			ShowTierPopup(position, info.tierName, info.newColor)
+
+		elseif info.mutationType == "valueBonus" then
+			-- Silent
 		end
-
-		ShowTierPopup(position, info.tierName, info.newColor)
-
-	elseif info.mutationType == "valueBonus" then
-		-- Silent
 	end
 end)
 
@@ -1577,7 +1579,7 @@ ReplicatedStorage.RemoteEvents.UpgradeUpdated.OnClientEvent:Connect(function(inf
 	local mythicData = info.upgrades["unlockMythicMult"]
 	local mythicLevel = (typeof(mythicData) == "table" and mythicData.level) or (typeof(mythicData) == "number" and mythicData) or 0
 
-	-- ? If they bought the unlock, change the cap to 6 (Mythic)
+	-- ✨ If they bought the unlock, change the cap to 6 (Mythic)
 	playerMaxTier = (mythicLevel > 0) and 6 or 5
 end)
 
