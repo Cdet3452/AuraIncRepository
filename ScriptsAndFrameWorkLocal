@@ -3008,6 +3008,7 @@ StatsBtn.Size=UDim2.new(0,C.HUD.NextAreaButtonW,0,C.HUD.NextAreaButtonH)
 StatsBtn.Position=UDim2.new(0,156,1,C.HUD.BottomButtonY)
 StatsBtn.BackgroundColor3=T.headerBG; StatsBtn.BorderSizePixel=0
 StatsBtn.Text="Next Area"; StatsBtn.TextColor3=T.bodyText; StatsBtn.TextScaled=true; StatsBtn.Font=T.font
+StatsBtn.Visible = false 
 StatsBtn.ZIndex=10; StatsBtn.Parent=mainHUD
 StatsBtn:SetAttribute("TutorialTarget", "AreaTravelButton")
 Instance.new("UICorner",StatsBtn).CornerRadius=UDim.new(0,8)
