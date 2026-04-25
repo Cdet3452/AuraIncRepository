@@ -2377,10 +2377,14 @@ function GameManager.CollectOldestCubes(uid, count)
 			if needed > 0 then
 				table.insert(collected, cubeId)
 				table.insert(collectedCubes, runtime.cubes[cubeId])
-				runtime.cubes[cubeId] = nil
-				runtime.cubeCount -= 1
+
+				-- 1. Grab the value BEFORE deleting it!
 				local valToRemove = MutationConfig.GetMutatedValue(runtime.cubes[cubeId])
 				runtime.totalMutatedValue -= valToRemove
+
+				-- 2. NOW delete it
+				runtime.cubes[cubeId] = nil
+				runtime.cubeCount -= 1
 				needed -= 1
 			else
 				table.insert(newOrder, cubeId)
