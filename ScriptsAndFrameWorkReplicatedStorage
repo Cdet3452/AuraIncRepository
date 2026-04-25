@@ -2237,6 +2237,12 @@ UpgradeConfig.Tiers = {
 				apply = function(data) return ((data.upgrades and data.upgrades.hatcheryT9) or 0) * 500000 end,
 				displayName = "Big Bang Forges", description = "Hatch energy from the birth of new universes (+500k capacity).",
 			},
+			unlockUniversalMult = { 
+				baseCost = 1e20, costScale = 1, maxLevel = 1, 
+				apply = function(data) return ((data.upgrades and data.upgrades.unlockUniversalMult) or 0) == 1 end,
+				displayName = "Universal Multiplier", 
+				description = "Shatter reality. Unlocks the " .. (AdminConfig.MilestoneData[9] and AdminConfig.MilestoneData[9].name or "UNIVERSAL") .. " tier!",
+			},
 		}
 	},
 	[10] = {
@@ -2248,12 +2254,11 @@ UpgradeConfig.Tiers = {
 				apply = function(data) return ((data.upgrades and data.upgrades.auraValueT10) or 0) * 150.0 end,
 				displayName = "Limitless Potential", description = "The ultimate value upgrade. +15,000% value per level.",
 			},
-			-- ✨ Unlocks the final Tier 9 Multiplier in AdminConfig!
 			unlockOmniMult = { 
-				baseCost = 5e23, costScale = 1, maxLevel = 1, -- 500 Sextillion
+				baseCost = 5e23, costScale = 1, maxLevel = 1,
 				apply = function(data) return ((data.upgrades and data.upgrades.unlockOmniMult) or 0) == 1 end,
 				displayName = "Omni Multiplier", 
-				description = "The absolute limit. Unlocks the " .. (AdminConfig.MilestoneData[9] and AdminConfig.MilestoneData[9].name or "OMNI") .. " tier!",
+				description = "The absolute limit. Unlocks the " .. (AdminConfig.MilestoneData[10] and AdminConfig.MilestoneData[10].name or "OMNI") .. " tier!",
 			},
 		}
 	},
