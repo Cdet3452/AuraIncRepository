@@ -1912,9 +1912,6 @@ function BoostManager.GetSoulMultiplier(uid)
 	end
 	return 1
 end
----------------------------------------------------------------
--- Build state payload for client
----------------------------------------------------------------
 local function BuildState(uid)
 	PruneExpired(uid)
 	local stacks = activeStacks[uid] or {}
@@ -1922,7 +1919,10 @@ local function BuildState(uid)
 	local now    = tick()
 
 	local state = {}
-	for boostId, cfg in pairs(AdminConfig.Boosts or {}) do
+
+	-- THE FIX: Iterate through BoostConfig instead of AdminConfig!
+	for boostId, cfg in pairs(BoostConfig.Boosts or {}) do
+
 		local activeList = {}
 		for _, entry in ipairs(stacks) do
 			if entry.boostId == boostId and entry.endsAt > now then
