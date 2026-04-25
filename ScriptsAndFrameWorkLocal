@@ -823,6 +823,7 @@ local HabitatFull = ReplicatedStorage.RemoteEvents:WaitForChild("HabitatFull")
 local CubeMutated = ReplicatedStorage.RemoteEvents:WaitForChild("CubeMutated")
 local UpdateMultiplier = ReplicatedStorage:WaitForChild("UpdateMultiplier")
 local HabitatFullEvent = ReplicatedStorage:WaitForChild("HabitatFullEvent")
+local CubeMutatedBatch = RemoteEvents:WaitForChild("CubeMutatedBatch")
 
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
