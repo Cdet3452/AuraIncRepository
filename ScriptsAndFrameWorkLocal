@@ -393,6 +393,7 @@ local TweenService      = game:GetService("TweenService")
 local AdminConfig       = require(ReplicatedStorage.Modules.AdminConfig)
 local T                 = require(ReplicatedStorage.Modules.UITheme).Get()
 local SoundConfig       = require(ReplicatedStorage.Modules.SoundConfig)
+local BoostConfig       = require(ReplicatedStorage.Modules.BoostConfig) -- ADD THIS LINE
 local UITheme = require(game:GetService("ReplicatedStorage"):WaitForChild("Modules"):WaitForChild("UITheme"))
 local T = UITheme.Get("Custom")
 local BuyBoost      = ReplicatedStorage.RemoteEvents:WaitForChild("BuyBoost")
@@ -448,7 +449,7 @@ StripLayout.Parent = BoostStrip
 local stripSlots = {}
 
 for _, boostId in ipairs(BOOST_ORDER) do
-	local cfg   = AdminConfig.Boosts and AdminConfig.Boosts[boostId]
+	local cfg   = BoostConfig.Get(boostId)
 	if not cfg then continue end
 	local color = BOOST_COLORS[boostId]
 
@@ -587,7 +588,7 @@ local cardRefs = {}
 
 local function BuildCards()
 	for i, boostId in ipairs(BOOST_ORDER) do
-		local cfg = AdminConfig.Boosts and AdminConfig.Boosts[boostId]
+		local cfg = BoostConfig.Get(boostId)
 		if not cfg then continue end
 		local color = BOOST_COLORS[boostId]
 
@@ -659,9 +660,9 @@ end
 BuildCards()
 
 local function RefreshCards()
-	GoldLabel.Text = "? " .. math.floor(liveGold) .. " Golden Auras"
+	GoldLabel.Text = "⭐ " .. math.floor(liveGold) .. " Golden Auras"
 	for boostId, refs in pairs(cardRefs) do
-		local cfg         = AdminConfig.Boosts and AdminConfig.Boosts[boostId]
+		local cfg         = BoostConfig.Get(boostId)
 		local state       = boostState[boostId]
 		local color       = refs.color
 		local invCount    = state and (state.inventoryCount or 0) or 0
@@ -673,7 +674,7 @@ local function RefreshCards()
 		refs.invBadge.Text       = "x" .. invCount
 		refs.invBadge.TextColor3 = invCount > 0 and T.bodyText or Color3.fromRGB(100,100,120)
 
-		refs.buyBtn.Text             = cost .. " ?"
+		refs.buyBtn.Text             = cost .. " ⭐"
 		refs.buyBtn.TextColor3       = T.bodyText
 		refs.buyBtn.BackgroundColor3 = canAfford and T.buttonGreen or T.buttonDisabled
 
@@ -823,7 +824,7 @@ local HabitatFull = ReplicatedStorage.RemoteEvents:WaitForChild("HabitatFull")
 local CubeMutated = ReplicatedStorage.RemoteEvents:WaitForChild("CubeMutated")
 local UpdateMultiplier = ReplicatedStorage:WaitForChild("UpdateMultiplier")
 local HabitatFullEvent = ReplicatedStorage:WaitForChild("HabitatFullEvent")
-local CubeMutatedBatch = RemoteEvents:WaitForChild("CubeMutatedBatch")
+local CubeMutatedBatch = ReplicatedStorage.RemoteEvents:WaitForChild("CubeMutatedBatch")
 
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
