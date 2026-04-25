@@ -55,21 +55,6 @@ AdminConfig.MaxArea              = 25
 
 AdminConfig.GoldenAuraStart = 0
 
-AdminConfig.Boosts = {
-	AuraRush = {
-		displayName="Aura Rush", description="Double Aura spawn speed", icon="rbxassetid://14923340156",
-		duration=30, cost=15, multiplier=5.0, stackable=true, maxStack=3,
-	},
-	SpawnBoost = {
-		displayName="Value Boost", description="Double Earning Rate", icon="rbxassetid://14914800826",
-		duration=40, cost=35, multiplier=2.0, stackable=true, maxStack=3,
-	},
-	SoulBoost = {
-		displayName="Soul Boost", description="2x Soul Auras on Prestige", icon="rbxassetid://14917001489",
-		duration=120, cost=100, multiplier=2.0, stackable=false, maxStack=1,
-	},
-}
-
 -- AURA PHYSICS (CRANKED UP)
 AdminConfig.PhysicsSpawnMin = 10
 AdminConfig.PhysicsSpawnMax = 30
