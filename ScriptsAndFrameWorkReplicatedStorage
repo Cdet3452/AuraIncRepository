@@ -934,10 +934,9 @@ MutationConfig.AFKDecay = {
 ---------------------------------------------------------------
 MutationConfig.CheckInterval = 1.0
 
----------------------------------------------------------------
--- Utility: calculate current mutated value of a cube record.
----------------------------------------------------------------
 function MutationConfig.GetMutatedValue(cube)
+	if not cube then return 0 end -- ADDED: The safety net!
+
 	local bonus = 0
 	for _, entry in ipairs(MutationConfig.ValueBonuses) do
 		if cube.effectiveElapsed >= entry.time then bonus = entry.bonus end
