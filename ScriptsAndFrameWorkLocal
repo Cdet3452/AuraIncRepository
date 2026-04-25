@@ -2159,23 +2159,68 @@ playGrad.Rotation = 90
 playGrad.Parent = playBtn
 
 ---------------------------------------------------------------
--- PLAY BUTTON PULSE ANIMATION (Scale-based)
+-- UI JUICE: Floating Menu & Play Button Polish
 ---------------------------------------------------------------
-local function PulseButton()
+-- 1. Make the entire menu container gently float up and down
+TweenService:Create(container, TweenInfo.new(2.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), {
+	Position = container.Position - UDim2.new(0, 0, 0, 12)
+}):Play()
+
+-- 2. The Play Button Interactive Juice
+local btnScale = Instance.new("UIScale", playBtn)
+local isHovering = false
+
+-- Subtle idle pulse (only runs when you aren't hovering over it)
+task.spawn(function()
 	while playBtn and playBtn.Parent do
-		TweenService:Create(playBtn, TweenInfo.new(0.8, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {
-			Size = UDim2.new(0.48, 0, 0.27, 0) -- Slightly larger scale
-		}):Play()
-		task.wait(0.8)
+		if not isHovering then
+			TweenService:Create(btnScale, TweenInfo.new(1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {Scale = 1.03}):Play()
+		end
+		task.wait(1)
 		if not playBtn or not playBtn.Parent then break end
 
-		TweenService:Create(playBtn, TweenInfo.new(0.8, Enum.EasingStyle.Sine, Enum.EasingDirection.In), {
-			Size = UDim2.new(0.45, 0, 0.25, 0) -- Back to original scale
-		}):Play()
-		task.wait(0.8)
+		if not isHovering then
+			TweenService:Create(btnScale, TweenInfo.new(1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {Scale = 1.0}):Play()
+		end
+		task.wait(1)
 	end
-end
-task.spawn(PulseButton)
+end)
+
+-- Hover Effects (Grow and change color)
+playBtn.MouseEnter:Connect(function()
+	isHovering = true
+	TweenService:Create(btnScale, TweenInfo.new(0.15, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {Scale = 1.1}):Play()
+	TweenService:Create(playBtn, TweenInfo.new(0.15), {BackgroundColor3 = T.accentPurple}):Play() -- Gives it a nice glow!
+end)
+
+-- Leave Effects (Shrink back to normal)
+playBtn.MouseLeave:Connect(function()
+	isHovering = false
+	TweenService:Create(btnScale, TweenInfo.new(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.In), {Scale = 1.0}):Play()
+	TweenService:Create(playBtn, TweenInfo.new(0.2), {BackgroundColor3 = T.buttonPrimary}):Play()
+end)
+
+-- Click Down (Squish inwards)
+playBtn.MouseButton1Down:Connect(function()
+	TweenService:Create(btnScale, TweenInfo.new(0.1, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {Scale = 0.9}):Play()
+	if shared.PlayUISound then shared.PlayUISound("6895079853") end -- Optional UI Click Sound
+end)
+
+-- Release Click (Bounce back out)
+playBtn.MouseButton1Up:Connect(function()
+	TweenService:Create(btnScale, TweenInfo.new(0.3, Enum.EasingStyle.Bounce), {Scale = 1.1}):Play()
+end)
+
+-- 3. Apply your UITheme Glass-ify features!
+task.spawn(function()
+	task.wait(0.5) -- Wait for UI to load
+	if UITheme and UITheme.ApplyShine then
+		UITheme.ApplyShine(playBtn)
+	end
+	if UITheme and UITheme.ApplyFlair then
+		UITheme.ApplyFlair(titleLabel, "Ghost")
+	end
+end)
 
 ---------------------------------------------------------------
 -- CREDITS LINE
@@ -2280,6 +2325,7 @@ playBtn.MouseButton1Down:Connect(function()
 	-- Full cleanup
 	menuScreen:Destroy()
 end)
+
 PlatformController:
 -- PlatformController
 -- Location: StarterPlayer > StarterPlayerScripts > PlatformController
