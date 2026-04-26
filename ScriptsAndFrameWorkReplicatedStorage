@@ -2269,3 +2269,69 @@ function UpgradeConfig.CalculateCost(upgradeId, currentLevel)
 end
 
 return UpgradeConfig
+
+local WeatherConfig = {
+	CycleTime = 60, -- 5 minutes per weather cycle
+	EventChance = 0.35, -- 35% chance to roll a storm
+
+	Types = {
+		Clear = {
+			name = "Clear Skies", minArea = 1,
+			ambient = Color3.fromRGB(130, 130, 130), fogEnd = 2000,
+			particle = nil, rate = 0,
+			spawnMult = 1.0, valueMult = 1.0,
+			color = Color3.fromRGB(200, 200, 200),
+			bannerText = "The skies have cleared."
+		},
+		Windy = {
+			name = "Windy", minArea = 1, -- Unlocked immediately
+			ambient = Color3.fromRGB(160, 170, 160), fogEnd = 1200,
+			particle = "rbxassetid://14922084401", rate = 15, 
+			spawnMult = 1.2, valueMult = 1.0,
+			color = Color3.fromRGB(150, 200, 150),
+			bannerText = "Windy! 1.2x Spawn Speed!"
+		},
+		Nightfall = {
+			name = "Nightfall", minArea = 2, -- Unlocked in Area 2
+			ambient = Color3.fromRGB(30, 30, 50), fogEnd = 800,
+			particle = "rbxassetid://14914000799", rate = 20, 
+			spawnMult = 1.0, valueMult = 1.5,
+			color = Color3.fromRGB(100, 100, 255),
+			bannerText = "Nightfall! 1.5x Aura Value!"
+		},
+		Starfall = {
+			name = "Starfall", minArea = 3,
+			ambient = Color3.fromRGB(100, 100, 150), fogEnd = 800,
+			particle = "rbxassetid://14914000799", rate = 40,
+			spawnMult = 1.0, valueMult = 1.5,
+			color = Color3.fromRGB(255, 255, 100),
+			bannerText = "Starfall! 1.5x Aura Value!"
+		},
+		Corruption = {
+			name = "Corruption", minArea = 4,
+			ambient = Color3.fromRGB(80, 40, 120), fogEnd = 400,
+			particle = "rbxassetid://14922084401", rate = 100,
+			spawnMult = 2.0, valueMult = 0.8,
+			color = Color3.fromRGB(150, 50, 255),
+			bannerText = "Corruption! 2x Spawn Speed!"
+		},
+		Eclipse = {
+			name = "Eclipse", minArea = 5,
+			ambient = Color3.fromRGB(10, 10, 10), fogEnd = 200,
+			particle = "rbxassetid://14922084401", rate = 15,
+			spawnMult = 0.5, valueMult = 3.0,
+			color = Color3.fromRGB(100, 100, 100),
+			bannerText = "Eclipse... 3.0x Aura Value!"
+		},
+		Hell = {
+			name = "Hell", minArea = 6,
+			ambient = Color3.fromRGB(150, 40, 20), fogEnd = 300,
+			particle = "rbxassetid://14922084401", rate = 200,
+			spawnMult = 3.0, valueMult = 2.0,
+			color = Color3.fromRGB(255, 80, 20),
+			bannerText = "HELL STORM! Massive Boosts!"
+		},
+	}
+}
+
+return WeatherConfig
