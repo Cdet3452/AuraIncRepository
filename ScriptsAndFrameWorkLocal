@@ -6828,3 +6828,119 @@ frame.BorderSizePixel = 0
 frame.Parent = gui
 
 gui.Parent = playerGui
+
+--WeatherController
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
+local Lighting = game:GetService("Lighting")
+
+local WeatherConfig = require(ReplicatedStorage.Modules.WeatherConfig)
+local T = require(ReplicatedStorage.Modules.UITheme).Get("Custom")
+local C = require(ReplicatedStorage.Modules.UIConfig)
+
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+local mainHUD = playerGui:WaitForChild("MainHUD")
+local WeatherChanged = ReplicatedStorage.RemoteEvents:WaitForChild("WeatherChanged")
+
+local camera = workspace.CurrentCamera
+local currentTween = nil
+
+---------------------------------------------------------------
+-- CAMERA CLOUD SETUP
+---------------------------------------------------------------
+local cloudPart = Instance.new("Part")
+cloudPart.Name = "WeatherCloud"
+cloudPart.Size = Vector3.new(100, 1, 100)
+cloudPart.Transparency = 1
+cloudPart.Anchored = true
+cloudPart.CanCollide = false
+cloudPart.Parent = workspace
+
+local emitter = Instance.new("ParticleEmitter")
+emitter.Name = "WeatherEmitter"
+emitter.EmissionDirection = Enum.NormalId.Bottom
+emitter.Rate = 0
+emitter.Speed = NumberRange.new(30, 50)
+emitter.Lifetime = NumberRange.new(1.5, 2.5)
+emitter.Size = NumberSequence.new({NumberSequenceKeypoint.new(0, 0.4), NumberSequenceKeypoint.new(1, 0.4)})
+emitter.Parent = cloudPart
+
+RunService.RenderStepped:Connect(function()
+	cloudPart.CFrame = camera.CFrame * CFrame.new(0, 40, -15)
+end)
+
+---------------------------------------------------------------
+-- THE TOP DROP-DOWN BANNER
+---------------------------------------------------------------
+local function ShowWeatherBanner(cfg)
+	-- Pulls sizes directly from your UIConfig just like the Portal banner
+	local PBW = C.Banners.PortalBannerW or 300
+	local PBH = C.Banners.PortalBannerH or 60
+	local BR = C.Banners.CornerRadius or 8
+
+	local banner = Instance.new("Frame")
+	banner.Size = UDim2.new(0, PBW, 0, PBH)
+	banner.Position = UDim2.new(0.5, -PBW/2, 0, -PBH - 10)
+	banner.BackgroundColor3 = T.panelBG
+	banner.BorderSizePixel = 0
+	banner.ZIndex = 60
+	banner.Parent = mainHUD
+	Instance.new("UICorner", banner).CornerRadius = UDim.new(0, BR)
+
+	local bStroke = Instance.new("UIStroke")
+	bStroke.Color = cfg.color
+	bStroke.Thickness = 2
+	bStroke.Parent = banner
+
+	local bLabel = Instance.new("TextLabel")
+	bLabel.Size = UDim2.new(1, -20, 1, 0)
+	bLabel.Position = UDim2.new(0, 10, 0, 0)
+	bLabel.BackgroundTransparency = 1
+	bLabel.Text = cfg.bannerText
+	bLabel.TextColor3 = cfg.color
+	bLabel.TextScaled = true
+	bLabel.Font = T.font
+	bLabel.ZIndex = 61
+	bLabel.Parent = banner
+
+	-- Smooth drop down
+	TweenService:Create(banner, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out),
+		{ Position = UDim2.new(0.5, -PBW/2, 0, 14) }):Play()
+
+	-- Retreat after 5 seconds
+	task.delay(5, function()
+		TweenService:Create(banner, TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
+			{ Position = UDim2.new(0.5, -PBW/2, 0, -PBH - 10) }):Play()
+		task.delay(0.4, function() if banner and banner.Parent then banner:Destroy() end end)
+	end)
+end
+
+---------------------------------------------------------------
+-- WEATHER EVENT LISTENER
+---------------------------------------------------------------
+WeatherChanged.OnClientEvent:Connect(function(weatherName)
+	local cfg = WeatherConfig.Types[weatherName] or WeatherConfig.Types.Clear
+
+	-- 1. Pop the beautiful UI Banner
+	ShowWeatherBanner(cfg)
+
+	-- 2. Tween Lighting
+	if currentTween then currentTween:Cancel() end
+	currentTween = TweenService:Create(Lighting, TweenInfo.new(4.0, Enum.EasingStyle.Sine), {
+		Ambient = cfg.ambient,
+		FogEnd = cfg.fogEnd
+	})
+	currentTween:Play()
+
+	-- 3. Transition Particles
+	if cfg.particle then
+		emitter.Texture = cfg.particle
+		emitter.Color = ColorSequence.new(cfg.color)
+		TweenService:Create(emitter, TweenInfo.new(3.0), {Rate = cfg.rate}):Play()
+	else
+		TweenService:Create(emitter, TweenInfo.new(2.0), {Rate = 0}):Play()
+	end
+end)
