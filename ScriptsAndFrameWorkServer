@@ -2406,3 +2406,64 @@ end)
 
 return GameManager
 
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ServerScriptService = game:GetService("ServerScriptService")
+
+local WeatherConfig = require(ReplicatedStorage.Modules.WeatherConfig)
+local GameManager = require(ServerScriptService.GameManager) -- Get player areas from here
+local WeatherChanged = ReplicatedStorage.RemoteEvents:WaitForChild("WeatherChanged")
+
+local WeatherManager = {}
+local PlayerWeathers = {}
+
+-- Spawner asks for the math of a SPECIFIC player's weather
+function WeatherManager.GetMultipliers(uid)
+	local current = PlayerWeathers[uid] or "Clear"
+	local cfg = WeatherConfig.Types[current] or WeatherConfig.Types.Clear
+	return cfg.spawnMult, cfg.valueMult
+end
+
+-- Rolls the dice based on what areas the player has unlocked
+local function UpdatePlayerWeather(player)
+	local uid = player.UserId
+	local data = GameManager.GetData(uid)
+	local currentArea = data and data.currentArea or 1
+
+	-- 1. Gather all storms this player is allowed to see
+	local availableStorms = {}
+	for key, cfg in pairs(WeatherConfig.Types) do
+		if key ~= "Clear" and currentArea >= (cfg.minArea or 1) then
+			table.insert(availableStorms, key)
+		end
+	end
+
+	-- 2. Roll the dice
+	local newWeather = "Clear"
+	if #availableStorms > 0 and math.random() <= WeatherConfig.EventChance then
+		newWeather = availableStorms[math.random(1, #availableStorms)]
+	end
+
+	-- 3. If it changed, save it and tell their client to drop the banner!
+	if newWeather ~= (PlayerWeathers[uid] or "Clear") then
+		PlayerWeathers[uid] = newWeather
+		WeatherChanged:FireClient(player, newWeather) -- ONLY fires to this player!
+	end
+end
+
+-- Clean memory when they leave
+Players.PlayerRemoving:Connect(function(player)
+	PlayerWeathers[player.UserId] = nil
+end)
+
+-- The master clock that rolls weather for everyone every CycleTime
+task.spawn(function()
+	while true do
+		task.wait(WeatherConfig.CycleTime)
+		for _, player in ipairs(Players:GetPlayers()) do
+			UpdatePlayerWeather(player)
+		end
+	end
+end)
+
+return WeatherManager
