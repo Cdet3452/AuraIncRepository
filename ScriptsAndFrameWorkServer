@@ -524,6 +524,7 @@ local MutationConfig = require(ReplicatedStorage.Modules.MutationConfig)
 local AreaRegistry   = require(ReplicatedStorage.Modules.AreaRegistry)
 local GameManager    = require(ServerScriptService.GameManager)
 local BoostManager   = require(ServerScriptService.BoostManager)
+local WeatherManager = require(ServerScriptService.WeatherManager) 
 
 local AuraSpawned    = ReplicatedStorage.RemoteEvents:WaitForChild("AuraSpawned")
 local ProduceAura    = ReplicatedStorage.RemoteEvents:WaitForChild("ProduceAura")
@@ -797,8 +798,8 @@ local function SpawnAura(player, data, runtime, holdMult, luckBonus)
 	local prestigeMult    = PrestigeModule.GetMultiplier(data.soulAuras)
 	local areaMult        = AreaRegistry.GetMultiplier(data.currentArea or 1)  -- FIX
 	local boostValueMult  = BoostManager.GetValueMultiplier(uid)
-
-	local baseValue  = math.floor(AdminConfig.BaseAuraValue * tier.multiplier * valueMultiplier * prestigeMult * areaMult * boostValueMult)
+	local _, weatherValueMult = WeatherManager.GetMultipliers(uid)
+	local baseValue  = math.floor(AdminConfig.BaseAuraValue * tier.multiplier * valueMultiplier * prestigeMult * areaMult * boostValueMult * weatherValueMult)
 	local totalValue = baseValue + math.floor(baseValue * (holdMult - 1))
 
 	local spawnPos = HABITAT_PART.Position + Vector3.new(math.random(-3,3), 10, math.random(-3,3))
@@ -833,8 +834,8 @@ ProduceAura.OnServerEvent:Connect(function(player, action)
 	if not holdStart[uid] then return end
 
 	local rushMult = BoostManager.GetSpawnRateMultiplier(uid)
-	local effectiveFireRate = AdminConfig.FireRate / rushMult
-
+	local weatherSpawnMult, _ = WeatherManager.GetMultipliers(uid)
+	local effectiveFireRate = AdminConfig.FireRate / (rushMult * weatherSpawnMult)
 	if lastFire[uid] then
 		local timeSinceLast = now - lastFire[uid]
 		if timeSinceLast > 3 then clickSessionStart[uid] = now end
