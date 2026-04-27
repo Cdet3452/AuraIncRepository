@@ -534,17 +534,8 @@ function UpdateRegularCard(upgradeId)
 		ref.buyButton.TextColor3=Color3.fromRGB(255, 255, 255) 
 		ref.buyButton.BackgroundColor3=Color3.fromRGB(100, 100, 100)
 
-		if not ref.frame:GetAttribute("HasMaxedOut") then
-			ref.frame:SetAttribute("HasMaxedOut", true)
+		PlayFeedbackSound("MaxOut", 0.6)
 
-			if not isLoadingData then
-				local scale = ref.frame:FindFirstChildOfClass("UIScale") or Instance.new("UIScale", ref.frame)
-				TweenService:Create(scale, TweenInfo.new(0.4, Enum.EasingStyle.Bounce), {Scale = 1.05}):Play()
-				task.delay(0.4, function() TweenService:Create(scale, TweenInfo.new(0.2), {Scale = 1}):Play() end)
-				PlayUIBurst(ref.frame, 20, Color3.fromRGB(255, 215, 0))
-				PlayFeedbackSound("MaxOut", 0.6)
-			end
-		end
 	else
 		-- ✨ Keeps its standard position if not maxed
 		ref.frame.LayoutOrder = ref.baseOrder or 0 
@@ -581,18 +572,8 @@ function UpdateEpicCard(upgradeId)
 		ref.buyButton.TextColor3=Color3.fromRGB(255, 255, 255)
 		ref.buyButton.BackgroundColor3=Color3.fromRGB(100, 100, 100)
 
-		if not ref.frame:GetAttribute("HasMaxedOut") then
-			ref.frame:SetAttribute("HasMaxedOut", true)
+		PlayFeedbackSound("MaxOut", 0.6)
 
-			-- ✨ THE SILENCER
-			if not isLoadingData then
-				local scale = ref.frame:FindFirstChildOfClass("UIScale") or Instance.new("UIScale", ref.frame)
-				TweenService:Create(scale, TweenInfo.new(0.4, Enum.EasingStyle.Bounce), {Scale = 1.05}):Play()
-				task.delay(0.4, function() TweenService:Create(scale, TweenInfo.new(0.2), {Scale = 1}):Play() end)
-				PlayUIBurst(ref.frame, 20, Color3.fromRGB(255, 215, 0))
-				PlayFeedbackSound("MaxOut", 0.6)
-			end
-		end
 	else
 		-- ✨ Keeps its standard position if not maxed
 		ref.frame.LayoutOrder = ref.baseOrder or 0 
