@@ -841,8 +841,6 @@ if UpgradeUpdated then
 
 			-- ✨ The Max Out sound stays perfectly safe!
 			if info.maxed and not wasMaxed and not isLoadingData then
-				PlayFeedbackSound("MaxOutTada")
-
 				if scroll then
 					local card = scroll:FindFirstChild(info.upgradeId)
 					if card and card:FindFirstChild("PurchaseButton") then
