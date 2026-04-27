@@ -533,9 +533,6 @@ function UpdateRegularCard(upgradeId)
 		ref.buyButton.Text="MAX"
 		ref.buyButton.TextColor3=Color3.fromRGB(255, 255, 255) 
 		ref.buyButton.BackgroundColor3=Color3.fromRGB(100, 100, 100)
-
-		PlayFeedbackSound("MaxOut", 0.6)
-
 	else
 		-- ✨ Keeps its standard position if not maxed
 		ref.frame.LayoutOrder = ref.baseOrder or 0 
@@ -571,9 +568,6 @@ function UpdateEpicCard(upgradeId)
 		ref.buyButton.Text="MAX"
 		ref.buyButton.TextColor3=Color3.fromRGB(255, 255, 255)
 		ref.buyButton.BackgroundColor3=Color3.fromRGB(100, 100, 100)
-
-		PlayFeedbackSound("MaxOut", 0.6)
-
 	else
 		-- ✨ Keeps its standard position if not maxed
 		ref.frame.LayoutOrder = ref.baseOrder or 0 
@@ -821,7 +815,8 @@ if UpgradeUpdated then
 			end
 
 			-- ✨ The Max Out sound stays perfectly safe!
-			if info.maxed and not wasMaxed and not isLoadingData then
+			if info.maxed and not wasMaxed then
+				PlayFeedbackSound("MaxOut", 0.6) 
 				if scroll then
 					local card = scroll:FindFirstChild(info.upgradeId)
 					if card and card:FindFirstChild("PurchaseButton") then
@@ -852,7 +847,8 @@ if EpicUpgradeUpdated then
 			UpdateEpicCard(info.upgradeId); UpdateCurrencyDisplay()
 
 			-- ✨ EXACT SAME FIX FOR EPIC UPGRADES
-			if info.maxed and not wasMaxed and not isLoadingData then
+			if info.maxed and not wasMaxed then
+				PlayFeedbackSound("MaxOut", 0.6) 
 				local scroll = ShopPanel:FindFirstChild("EpicScroll")
 				local card = scroll and scroll:FindFirstChild(info.upgradeId)
 				if card and card:FindFirstChild("PurchaseButton") then
@@ -939,3 +935,10 @@ end
 
 task.wait(2)
 RefreshLook()
+
+task.delay(20, function()
+	if isLoadingData then
+		isLoadingData = false
+		print("[ShopController] Failsafe activated: isLoadingData forced to false")
+	end
+end)
