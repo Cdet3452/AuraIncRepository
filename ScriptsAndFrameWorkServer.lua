@@ -339,7 +339,7 @@ local CollectionService = game:GetService("CollectionService")
 local AdminConfig = require(ReplicatedStorage.Modules:WaitForChild("AdminConfig"))
 local GameManager = require(ServerScriptService:WaitForChild("GameManager"))
 
--- ??? SAFETY CHECK: Using the correct name from your screenshot
+-- 🛡️ SAFETY CHECK: Using the correct name from your screenshot
 local AURA_ORIGIN = workspace:FindFirstChild("AuraModel") or workspace:FindFirstChild("AuraHolder")
 
 local function FadeOutAndDestroy(obj, duration)
@@ -358,7 +358,7 @@ end
 
 local function CreatePhysicsAura(isElite)
 	if not AURA_ORIGIN then 
-		warn("? AURA_ORIGIN (AuraModel/AuraHolder) NOT FOUND IN WORKSPACE!")
+		warn("❌ AURA_ORIGIN (AuraModel/AuraHolder) NOT FOUND IN WORKSPACE!")
 		return 
 	end
 
@@ -384,7 +384,7 @@ local function CreatePhysicsAura(isElite)
 
 	-- 3. POSITION & LAUNCH
 	local spawnPart = AURA_ORIGIN:FindFirstChild("Position")
-	if not spawnPart then warn("? No 'Position' part in AuraModel!"); return end
+	if not spawnPart then warn("❌ No 'Position' part in AuraModel!"); return end
 
 	local spawnPos = spawnPart.Position + Vector3.new(0, 5, 0)
 	if aura:IsA("Model") then aura:PivotTo(CFrame.new(spawnPos)) else aura.Position = spawnPos end
@@ -403,7 +403,7 @@ local function CreatePhysicsAura(isElite)
 		local sfx = sfxFolder.AuraShoot:Clone()
 		sfx.Parent = mainPart 
 
-		-- ? THE 3D BOOST FIX:
+		-- ✨ THE 3D BOOST FIX:
 		sfx.RollOffMaxDistance = 500 -- How many studs away you can still hear it
 		sfx.RollOffMinDistance = 10  -- Distance before the volume starts dropping
 		sfx.RollOffMode = Enum.RollOffMode.Linear -- Makes the drop-off feel more natural
@@ -413,16 +413,32 @@ local function CreatePhysicsAura(isElite)
 		Debris:AddItem(sfx, 2)
 	end
 	
-	-- 9. CLICK & REWARDS (??? Back to Custom Style)
+	-- ✨ NEW: SPAWN VFX
+	local vfxFolder = ReplicatedStorage:FindFirstChild("VFX")
+	if vfxFolder and vfxFolder:FindFirstChild("AuraSpawnVFX") then
+		local spawnEffect = vfxFolder.AuraSpawnVFX:Clone()
+		spawnEffect.Position = mainPart.Position
+		spawnEffect.Parent = workspace
+
+		-- Tell all ParticleEmitters inside the part to burst!
+		for _, emitter in ipairs(spawnEffect:GetDescendants()) do
+			if emitter:IsA("ParticleEmitter") then
+				emitter:Emit(emitter:GetAttribute("EmitCount") or 25) 
+			end
+		end
+		Debris:AddItem(spawnEffect, 3) -- Deletes the effect part after 3 seconds
+	end
+	
+	-- 9. CLICK & REWARDS (🛡️ Back to Custom Style)
 	local prompt = Instance.new("ProximityPrompt")
 	prompt.Name = "AuraPrompt"
 	prompt.ActionText = "Collect"
 	prompt.ObjectText = isElite and "Elite Aura" or "Golden Aura"
-	prompt.HoldDuration = 2
+	prompt.HoldDuration = 0
 	prompt.MaxActivationDistance = 30
 	prompt.RequiresLineOfSight = false 
 
-	-- ??? Hide the default bubble and tag it for the cool UI
+	-- 🛡️ Hide the default bubble and tag it for the cool UI
 	prompt.Style = Enum.ProximityPromptStyle.Custom 
 	prompt:SetAttribute("IsElite", isElite == true) 
 	game:GetService("CollectionService"):AddTag(prompt, "AuraHologram")
@@ -431,23 +447,58 @@ local function CreatePhysicsAura(isElite)
 
 
 	-- 5. LANDING LOGIC & LIFETIME START
-	local bounces, lastB = 0, 0
-	local maxB = isElite and AdminConfig.PhysicsMaxBouncesElite or AdminConfig.PhysicsMaxBouncesRegular
+	local maxB = (isElite and AdminConfig.PhysicsMaxBouncesElite or AdminConfig.PhysicsMaxBouncesRegular) or 1
 	local hasLanded = false
 
+	-- ✨ THE FIX: We must define these so the script has numbers to calculate!
+	local bounces = 0
+	local lastB = 0 
+
 	mainPart.Touched:Connect(function(hit)
+		-- Now lastB has a starting value of 0, so tick() - lastB won't crash!
 		if hasLanded or (tick() - lastB < 0.15) then return end
+
 		if hit.Position.Y <= mainPart.Position.Y then
+			-- Now bounces has a starting value, so we can safely add 1 to it!
 			bounces += 1
 			lastB = tick()
+
+			-- 🎵 SOUND SPOT 1: Touches the ground / Bounces
+			local sfxFolder = ReplicatedStorage:FindFirstChild("SFX")
+			if sfxFolder and sfxFolder:FindFirstChild("Landing") then
+				local sfx = sfxFolder.Landing:Clone()
+				sfx.Parent = mainPart
+				sfx:Play()
+				Debris:AddItem(sfx, 2)
+			end
 
 			if bounces > maxB then
 				hasLanded = true
 				mainPart.AssemblyLinearVelocity = Vector3.zero
 				mainPart.AssemblyAngularVelocity = Vector3.zero 
 
-				-- ??? LIFETIME STARTS NOW
-				task.delay(isElite and AdminConfig.PhysicsEliteDespawn or AdminConfig.PhysicsRegularDespawn, function()
+				-- ✨ NEW: LANDING VFX
+				local vfxFolder = ReplicatedStorage:FindFirstChild("VFX")
+				if vfxFolder and vfxFolder:FindFirstChild("AuraLandingVFX") then
+					local landingEffect = vfxFolder.AuraLandingVFX:Clone()
+					landingEffect.Position = mainPart.Position - Vector3.new(0, mainPart.Size.Y/2, 0)
+					landingEffect.Parent = workspace
+
+					for _, emitter in ipairs(landingEffect:GetDescendants()) do
+						if emitter:IsA("ParticleEmitter") then
+							emitter:Emit(emitter:GetAttribute("EmitCount") or 25) 
+						end
+					end
+					Debris:AddItem(landingEffect, 3)
+				end
+
+				-- 🛡️ LIFETIME STARTS NOW
+				local despawnTime = isElite and AdminConfig.PhysicsEliteDespawn or AdminConfig.PhysicsRegularDespawn
+				if type(despawnTime) ~= "number" then 
+					despawnTime = 15 -- Will stay on the ground for 15 seconds!
+				end
+
+				task.delay(despawnTime, function()
 					if aura and aura.Parent then 
 						FadeOutAndDestroy(aura, 1) 
 					end
@@ -459,11 +510,29 @@ local function CreatePhysicsAura(isElite)
 	prompt.Triggered:Connect(function(player)
 		local data = GameManager.GetData(player.UserId)
 		local runtime = GameManager.GetRuntime(player.UserId)
+
 		if data and runtime then
-			local mult = isElite and AdminConfig.PhysicsEliteMultiplier or AdminConfig.PhysicsRegularMultiplier
-			local r = (runtime.income or 0) * mult
-			data.currency += r; data.totalEarned += r
+			-- ✨ THE GOLDEN AURA MATH FIX: 
+			-- Elite gives 5 Golden Auras, Regular gives 1. (Change these numbers if you want!)
+			local r = isElite and 5 or 1 
+
+			data.goldenAuras += r
+
+			local RemoteEvents = ReplicatedStorage:FindFirstChild("RemoteEvents")
+			if RemoteEvents and RemoteEvents:FindFirstChild("UpdateHUD") then
+				RemoteEvents.UpdateHUD:FireClient(player, { goldenAuras = data.goldenAuras })
+			end
 		end
+
+		-- 🎵 SOUND SPOT 2: When Collected
+		local sfxFolder = ReplicatedStorage:FindFirstChild("SFX")
+		if sfxFolder and sfxFolder:FindFirstChild("ClassicBass") then
+			local sfx = sfxFolder.ClassicBass:Clone()
+			sfx.Parent = player.Character and player.Character:FindFirstChild("HumanoidRootPart") or workspace
+			sfx:Play()
+			Debris:AddItem(sfx, 2)
+		end
+
 		mainPart.Anchored = true
 		FadeOutAndDestroy(aura, 0.2)
 	end)
@@ -478,7 +547,7 @@ task.spawn(function()
 end)
 
 -- =======================================================
--- ?? TUTORIAL BURST LISTENER
+-- 💥 TUTORIAL BURST LISTENER
 -- =======================================================
 local RemoteEvents = ReplicatedStorage:FindFirstChild("RemoteEvents")
 if RemoteEvents then
@@ -491,12 +560,12 @@ if RemoteEvents then
 	end
 
 	burstEvent.OnServerEvent:Connect(function(player, amount)
-		-- ??? Anti-Exploit: Cap at 25 so hackers can't spawn 10,000 and crash the server
-		if type(amount) ~= "number" or amount > 25 then 
+		-- 🛡️ Anti-Exploit: Cap at 25 so hackers can't spawn 10,000 and crash the server
+		if type(amount) ~= "number" or amount > 50 then 
 			amount = 15 
 		end
 
-		-- ?? Trigger the Burst
+		-- 💥 Trigger the Burst
 		task.spawn(function()
 			for i = 1, amount do
 				-- Pass 'false' so it only drops standard Golden Auras, not game-breaking Elites
@@ -506,7 +575,6 @@ if RemoteEvents then
 		end)
 	end)
 end
-
 AuraSpawner:
 -- AuraSpawner
 -- Location: ServerScriptService > AuraSpawner
