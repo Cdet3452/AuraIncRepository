@@ -4130,6 +4130,7 @@ local activeMainTab     = "Upgrades"
 local activeEpicSubTab  = "Active"
 local regularCardRefs   = {}
 local epicCardRefs      = {}
+local isLoadingData     = true
 
 ---------------------------------------------------------------
 -- INITIALIZATION (TIERED)
@@ -4153,6 +4154,7 @@ for _, tierData in ipairs(EpicUpgradeConfig.Tiers) do
 end
 
 local function PlayUIBurst(targetElement, amount, colorTheme)
+	if not shopOpen then return end
 	local burstGui = Instance.new("ScreenGui")
 	burstGui.Name = "JuiceBurst"
 	burstGui.Parent = playerGui
@@ -4169,22 +4171,19 @@ local function PlayUIBurst(targetElement, amount, colorTheme)
 		particle.Position = UDim2.new(0, center.X, 0, center.Y)
 		particle.Rotation = math.random(0, 360)
 
-		-- Make it a sleek diamond/circle instead of a boring square
 		local corner = Instance.new("UICorner")
 		corner.CornerRadius = UDim.new(0.5, 0)
 		corner.Parent = particle
 		particle.Parent = burstGui
 
-		-- Physics Math
 		local angle = math.rad(math.random(0, 360))
 		local distance = math.random(50, 150)
-		local endPos = UDim2.new(0, center.X + math.cos(angle) * distance, 0, center.Y + math.sin(angle) * distance + 50) -- +50 simulates gravity falling
+		local endPos = UDim2.new(0, center.X + math.cos(angle) * distance, 0, center.Y + math.sin(angle) * distance + 50) 
 
-		-- The Tween
 		local tInfo = TweenInfo.new(math.random(4, 7)/10, Enum.EasingStyle.Cubic, Enum.EasingDirection.Out)
 		local tween = TweenService:Create(particle, tInfo, {
 			Position = endPos,
-			Size = UDim2.new(0, 0, 0, 0), -- Shrink to nothing
+			Size = UDim2.new(0, 0, 0, 0),
 			Rotation = particle.Rotation + math.random(-180, 180),
 			BackgroundTransparency = 1
 		})
@@ -4205,14 +4204,32 @@ local function PlayPurchaseSound()
 	end
 	lastBuyTime = tick()
 
-	-- ? THE FIX: Safe check! Only play if the folder and sound actually exist.
-	local soundsFolder = ReplicatedStorage:FindFirstChild("SFX")
+	local soundsFolder = ReplicatedStorage:FindFirstChild("SFX") or ReplicatedStorage:FindFirstChild("Sounds")
 	if soundsFolder and soundsFolder:FindFirstChild("BuyPing") then
 		local sfx = soundsFolder.BuyPing:Clone() 
 		sfx.PlaybackSpeed = comboPitch
-		sfx.Parent = workspace
+		sfx.Parent = game:GetService("SoundService")
 		sfx:Play()
 		game.Debris:AddItem(sfx, 2)
+	end
+end
+
+local function PlayFeedbackSound(soundName, volume)
+	local soundsFolder = ReplicatedStorage:FindFirstChild("SFX") or ReplicatedStorage:FindFirstChild("Sounds")
+	local soundToPlay = nil
+
+	if soundsFolder then
+		soundToPlay = soundsFolder:FindFirstChild(soundName)
+	end
+
+	if soundToPlay then
+		local sfx = soundToPlay:Clone()
+		sfx.Volume = volume or 0.5
+		sfx.Parent = game:GetService("SoundService") 
+		sfx:Play()
+		game.Debris:AddItem(sfx, 3)
+	else
+		warn("⚠️ UI Sound Missing: You need to add a sound named '" .. tostring(soundName) .. "' inside ReplicatedStorage.SFX!")
 	end
 end
 
@@ -4231,7 +4248,6 @@ local function PlayErrorFeedback(targetButton)
 		game.Debris:AddItem(sfx, 2)
 	end
 
-	-- ? THE CRASH FIX: Check if the button still exists before trying to shake it!
 	if targetButton and targetButton.Parent then
 		local origPos = targetButton.Position
 		local wobbleInfo = TweenInfo.new(0.04, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, 3, true)
@@ -4239,16 +4255,6 @@ local function PlayErrorFeedback(targetButton)
 	end
 end
 
-local function PlayFeedbackSound(soundName, volume)
-	local soundsFolder = ReplicatedStorage:FindFirstChild("SFX")
-	if soundsFolder and soundsFolder:FindFirstChild(soundName) then
-		local sfx = soundsFolder[soundName]:Clone()
-		sfx.Volume = volume or 0.5
-		sfx.Parent = workspace
-		sfx:Play()
-		game.Debris:AddItem(sfx, 3)
-	end
-end
 -----------------------------------------------------------
 -- HELPERS
 ---------------------------------------------------------------
@@ -4288,7 +4294,7 @@ local panelStroke=Instance.new("UIStroke"); panelStroke.Color=T.panelStroke; pan
 local TitleBar=Instance.new("Frame"); TitleBar.Name="TitleBar"
 TitleBar.Size=UDim2.new(1,0,0,HEADER_H)
 TitleBar.BackgroundColor3=T.headerBG; TitleBar.BorderSizePixel=0; TitleBar.ZIndex=11; TitleBar.Parent=ShopPanel
-TitleBar.ClipsDescendants=true -- IMPORTANT: clip the shine to the title bar
+TitleBar.ClipsDescendants=true 
 TitleBar.BackgroundTransparency = 1
 Instance.new("UICorner",TitleBar).CornerRadius=UDim.new(0,10)
 local TitleLabel=Instance.new("TextLabel"); TitleLabel.Size=UDim2.new(1,-50,1,0); TitleLabel.Position=UDim2.new(0,15,0,0)
@@ -4302,7 +4308,7 @@ CloseButton:SetAttribute("TutorialTarget", "ShopCloseBtn")
 Instance.new("UICorner",CloseButton).CornerRadius=UDim.new(0,6)
 
 ---------------------------------------------------------------
--- INFO POPUP (EGG INC STYLE)
+-- INFO POPUP
 ---------------------------------------------------------------
 local InfoPopup = Instance.new("Frame")
 InfoPopup.Name = "InfoPopup"; InfoPopup.Size = UDim2.new(0.8, 0, 0.4, 0)
@@ -4334,7 +4340,6 @@ local function ShowInfoPopup(title, desc)
 	InfoTitle.Text = string.upper(title)
 	InfoDesc.Text = desc
 	InfoPopup.Visible = true
-	
 end
 
 ---------------------------------------------------------------
@@ -4407,17 +4412,15 @@ local function BuildCard(parent, upgradeId, cfg, isEpic, cardRefsTable)
 	local card = Instance.new("Frame")
 	card.Name = "Card_"..upgradeId
 	card.Size = UDim2.new(1, 0, 0, 100)
-	card.BackgroundColor3 = T.cardBG -- ? Restored your dark theme color!
+	card.BackgroundColor3 = T.cardBG 
 	card.BorderSizePixel = 0; card.Parent = parent
 	Instance.new("UICorner", card).CornerRadius = UDim.new(0, 12)
 
-	-- The Empty Icon Slot
 	local icon = Instance.new("ImageLabel", card)
 	icon.Size = UDim2.new(0, 50, 0, 50); icon.Position = UDim2.new(0, 15, 0.5, -25)
 	icon.BackgroundTransparency = 1
 	icon.Image = cfg.iconId or "rbxassetid://0" 
 
-	-- The (i) Info Button
 	local infoBtn = Instance.new("TextButton", card)
 	infoBtn.Size = UDim2.new(0, 22, 0, 22); infoBtn.Position = UDim2.new(0, 75, 0, 12)
 	infoBtn.BackgroundColor3 = T.buttonSecondary 
@@ -4426,94 +4429,96 @@ local function BuildCard(parent, upgradeId, cfg, isEpic, cardRefsTable)
 	Instance.new("UICorner", infoBtn).CornerRadius = UDim.new(1, 0)
 	infoBtn.MouseButton1Click:Connect(function() ShowInfoPopup(cfg.displayName, cfg.description) end)
 
-	-- The Massive Title
 	local nameLabel = Instance.new("TextLabel", card)
-	-- ? THE MATH FIX: 74% of the card, MINUS 120 pixels to completely clear the button
 	nameLabel.Size = UDim2.new(0.74, -120, 0, 24); nameLabel.Position = UDim2.new(0, 102, 0, 11)
 	nameLabel.BackgroundTransparency = 1; nameLabel.Text = string.upper(cfg.displayName)
 	nameLabel.TextColor3 = T.bodyText 
 	nameLabel.TextScaled = true; nameLabel.Font = Enum.Font.FredokaOne
 	nameLabel.TextXAlignment = Enum.TextXAlignment.Left
 
-	-- The Description
 	local descLabel = Instance.new("TextLabel", card)
-	-- ? THE MATH FIX: 74% MINUS 95 pixels (since this text starts further to the left)
 	descLabel.Size = UDim2.new(0.74, -95, 0, 36); descLabel.Position = UDim2.new(0, 75, 0, 38)
 	descLabel.BackgroundTransparency = 1; descLabel.Text = cfg.description
 	descLabel.TextColor3 = T.subText 
 	descLabel.TextWrapped = true; descLabel.TextSize = 16; descLabel.Font = Enum.Font.GothamMedium
 	descLabel.TextXAlignment = Enum.TextXAlignment.Left; descLabel.TextYAlignment = Enum.TextYAlignment.Top
 
-	-- The Level Text
 	local levelLabel = Instance.new("TextLabel", card)
-	-- ? THE MATH FIX: Clamped exactly like the description so it aligns perfectly
 	levelLabel.Size = UDim2.new(0.74, -95, 0, 18); levelLabel.Position = UDim2.new(0, 75, 0, 76)
 	levelLabel.BackgroundTransparency = 1; levelLabel.Text = "Lv. 0 / "..cfg.maxLevel
 	levelLabel.TextColor3 = T.accentGreen
 	levelLabel.TextSize = 16; levelLabel.Font = Enum.Font.FredokaOne; levelLabel.TextXAlignment = Enum.TextXAlignment.Left
 
-	-- The Buy Button
 	local buyButton = Instance.new("TextButton", card)
-	-- ? SHRUNK: Smaller height and width so it looks sleek and doesn't eat the text!
+	buyButton.Name = "PurchaseButton" -- ✨ ADDED NAME so particle script can find it
 	buyButton.Size = UDim2.new(0.24, 0, 0, 46); buyButton.AnchorPoint = Vector2.new(1, 0.5)
 	buyButton.Position = UDim2.new(1, -12, 0.5, 0)
 	buyButton.BackgroundColor3 = isEpic and T.accentPurple or T.buttonGreen
 	buyButton.BorderSizePixel = 0; buyButton.TextColor3 = T.bodyText
 	buyButton.TextScaled = true; buyButton.Font = Enum.Font.FredokaOne
 	Instance.new("UICorner", buyButton).CornerRadius = UDim.new(0, 8)
-	
+
 	cardRefsTable[upgradeId] = {
 		frame = card, levelLabel = levelLabel, buyButton = buyButton, isEpic = isEpic, tab = cfg.category
 	}
 
-	local holdingBuy = false
-	local buyGeneration = 0
+	local holdingBuy = false; local buyGeneration = 0
+
+	-- ✨ THE MEMORY FIX: Checks if you have ever passed the tutorial
+	local tutorialLockLifted = false
+	local function IsTutorialFinished()
+		if tutorialLockLifted then return true end -- If we already lifted it, keep it lifted forever!
+		if liveGoldenAuras > 0 then tutorialLockLifted = true; return true end -- You prestiged!
+		for _, state in pairs(epicUpgradeState) do
+			if state.level > 0 then tutorialLockLifted = true; return true end -- You have epic upgrades!
+		end
+		local valState = upgradeState["blockValue"]
+		if valState and valState.level > 0 then tutorialLockLifted = true; return true end -- You bought the tutorial upgrade!
+		return false
+	end
 
 	local function TryBuy()
 		if isEpic then
 			local state = epicUpgradeState[upgradeId]
-
-			-- ? THE FIX: Silently ignore if it's already maxed out! No error sound!
 			if not state or state.maxed then return end 
 
-			-- Only play the error sound if they are actually broke
-			if liveGoldenAuras < state.cost then 
-				PlayErrorFeedback(buyButton) 
-				return 
+			-- ✨ THE EPIC TUTORIAL LOCK (Uses Memory):
+			if not IsTutorialFinished() then
+				PlayErrorFeedback(buyButton) -- Buzz error
+				return -- Cancel the purchase!
 			end
+			-- ✨ ==========================================
 
-			liveGoldenAuras -= state.cost
-			state.level += 1
+			if liveGoldenAuras < state.cost then PlayErrorFeedback(buyButton); return end
+
+			local wasMaxedLocally = state.maxed; liveGoldenAuras -= state.cost; state.level += 1
 			state.maxed = (state.level >= state.maxLevel)
 			state.cost = state.maxed and 0 or EpicUpgradeConfig.CalculateCost(upgradeId, state.level)
-			UpdateEpicCard(upgradeId)
-			UpdateCurrencyDisplay()
-			PurchaseEpicUpgrade:FireServer(upgradeId)
-			PlayPurchaseSound() 
+
+			if state.maxed and not wasMaxedLocally then PlayFeedbackSound("MaxOut", 0.6); PlayUIBurst(buyButton, 20) else PlayPurchaseSound() end
+			UpdateEpicCard(upgradeId); UpdateCurrencyDisplay(); PurchaseEpicUpgrade:FireServer(upgradeId)
 		else
 			local state = upgradeState[upgradeId]
-
-			-- ? THE FIX: Silently ignore if it's already maxed out!
 			if not state or state.maxed then return end 
 
-			-- Only play the error sound if they are actually broke
-			if currentCurrency < state.cost then 
-				PlayErrorFeedback(buyButton)
-				return 
+			-- ✨ THE REGULAR TUTORIAL LOCK (Uses Memory):
+			if not IsTutorialFinished() and upgradeId ~= "blockValue" then
+				PlayErrorFeedback(buyButton) -- Shake the wrong button and play error sound
+				return -- Cancel the purchase entirely!
 			end
+			-- ✨ ==========================================
 
-			currentCurrency -= state.cost
-			state.level += 1
+			if currentCurrency < state.cost then PlayErrorFeedback(buyButton); return end
+
+			local wasMaxedLocally = state.maxed; currentCurrency -= state.cost; state.level += 1
 			state.maxed = (state.level >= state.maxLevel)
 			state.cost = state.maxed and 0 or UpgradeConfig.CalculateCost(upgradeId, state.level)
-			UpdateRegularCard(upgradeId)
-			UpdateCurrencyDisplay()
-			PurchaseUpgrade:FireServer(upgradeId)
-			PlayPurchaseSound() 
+
+			if state.maxed and not wasMaxedLocally then PlayFeedbackSound("MaxOut", 0.6); PlayUIBurst(buyButton, 20) else PlayPurchaseSound() end
+			UpdateRegularCard(upgradeId); UpdateCurrencyDisplay(); PurchaseUpgrade:FireServer(upgradeId)
 		end
 	end
 
-	-- Store the tween outside so we can cancel it
 	local pulseTween = nil
 
 	buyButton.MouseButton1Down:Connect(function()
@@ -4527,7 +4532,6 @@ local function BuildCard(parent, upgradeId, cfg, isEpic, cardRefsTable)
 			scale.Parent = buyButton 
 		end
 
-		-- ? THE FIX: An infinite looping tween that plays ONCE when you click!
 		pulseTween = TweenService:Create(scale, TweenInfo.new(0.12, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), {Scale = 0.88})
 		pulseTween:Play()
 
@@ -4536,16 +4540,21 @@ local function BuildCard(parent, upgradeId, cfg, isEpic, cardRefsTable)
 		local holdStart = tick()
 
 		local UserInputService = game:GetService("UserInputService")
+		
+		
+		local epicHoldSpeedLevel = (epicUpgradeState["epicHoldSpeed"] and epicUpgradeState["epicHoldSpeed"].level) or 0
+		local holdSpeedMultiplier = 1 + (epicHoldSpeedLevel * 0.3) -- +30% speed per level
+
 		while holdingBuy and buyGeneration == myGen do
 			if not UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) then
 				holdingBuy = false
 				break
 			end
 			TryBuy()
-			task.wait(math.max(0.05, 0.15 - ((tick() - holdStart) * 0.05)))
+			-- Base speed gets divided by your epic speed multiplier!
+			task.wait(math.max(0.01, (0.15 - ((tick() - holdStart) * 0.05)) / holdSpeedMultiplier))
 		end
 
-		-- Stop pulsing when the loop finishes naturally
 		if pulseTween then pulseTween:Cancel() end
 		if scale then TweenService:Create(scale, TweenInfo.new(0.2, Enum.EasingStyle.Bounce), {Scale = 1}):Play() end
 	end)
@@ -4560,17 +4569,6 @@ local function BuildCard(parent, upgradeId, cfg, isEpic, cardRefsTable)
 	buyButton.MouseLeave:Connect(function() 
 		holdingBuy = false 
 		if pulseTween then pulseTween:Cancel() end
-		local scale = buyButton:FindFirstChildOfClass("UIScale")
-		if scale then TweenService:Create(scale, TweenInfo.new(0.2, Enum.EasingStyle.Bounce), {Scale = 1}):Play() end
-	end)
-	buyButton.MouseButton1Up:Connect(function() 
-		holdingBuy = false 
-		local scale = buyButton:FindFirstChildOfClass("UIScale")
-		if scale then TweenService:Create(scale, TweenInfo.new(0.2, Enum.EasingStyle.Bounce), {Scale = 1}):Play() end
-	end)
-
-	buyButton.MouseLeave:Connect(function() 
-		holdingBuy = false 
 		local scale = buyButton:FindFirstChildOfClass("UIScale")
 		if scale then TweenService:Create(scale, TweenInfo.new(0.2, Enum.EasingStyle.Bounce), {Scale = 1}):Play() end
 	end)
@@ -4579,22 +4577,19 @@ end
 ---------------------------------------------------------------
 -- BUILD CARDS & DYNAMIC REBUILDER
 ---------------------------------------------------------------
--- 1. Build Epic Cards once at startup
 local epicOrderIndex = 1
 for _, tab in ipairs(EpicUpgradeConfig.Tabs) do
 	for _, tierData in ipairs(EpicUpgradeConfig.Tiers) do
 		for upgradeId, cfg in pairs(tierData.upgrades) do
-			-- ? THE BUG FIX: Pass EpicScroll, true, and epicCardRefs!
 			BuildCard(EpicScroll, upgradeId, cfg, true, epicCardRefs) 
 
 			local ref = epicCardRefs[upgradeId]
 			if ref and ref.frame then
-				-- ? THE SORTING FIX: Assign a base layout order
 				ref.baseOrder = epicOrderIndex
 				ref.frame.LayoutOrder = epicOrderIndex
 				epicOrderIndex += 1
 
-				ref.frame.Visible = false -- Hidden until tab is clicked
+				ref.frame.Visible = false 
 				ref.frame.Parent = EpicScroll
 
 				if UITheme and UITheme.Apply then UITheme.Apply(ref.frame, "ShopCard") end
@@ -4607,7 +4602,6 @@ function UpdateRegularCard(upgradeId)
 	local ref=regularCardRefs[upgradeId]; local state=upgradeState[upgradeId]
 	if not ref or not state then return end
 
-	-- ? THE FAILSAFE: Force the glossy theme to re-apply every single upgrade!
 	if UITheme and UITheme.Apply then
 		UITheme.Apply(ref.frame, "ShopCard")
 	end
@@ -4616,22 +4610,11 @@ function UpdateRegularCard(upgradeId)
 
 	if state.level >= state.maxLevel then
 		ref.frame.LayoutOrder = (ref.baseOrder or 0) + 100000 
-
 		ref.levelLabel.TextColor3=Color3.fromRGB(255, 215, 0) 
 		ref.buyButton.Text="MAX"
 		ref.buyButton.TextColor3=Color3.fromRGB(255, 255, 255) 
 		ref.buyButton.BackgroundColor3=Color3.fromRGB(100, 100, 100)
-
-		if not ref.frame:GetAttribute("HasMaxedOut") then
-			ref.frame:SetAttribute("HasMaxedOut", true)
-			local scale = ref.frame:FindFirstChildOfClass("UIScale") or Instance.new("UIScale", ref.frame)
-			TweenService:Create(scale, TweenInfo.new(0.4, Enum.EasingStyle.Bounce), {Scale = 1.05}):Play()
-			task.delay(0.4, function() TweenService:Create(scale, TweenInfo.new(0.2), {Scale = 1}):Play() end)
-			PlayUIBurst(ref.frame, 20, Color3.fromRGB(255, 215, 0))
-			PlayFeedbackSound("MaxOutTada", 0.6) 
-		end
 	else
-		-- ? Keeps its standard position if not maxed
 		ref.frame.LayoutOrder = ref.baseOrder or 0 
 
 		if currentCurrency<state.cost then
@@ -4650,7 +4633,6 @@ function UpdateEpicCard(upgradeId)
 	local ref=epicCardRefs[upgradeId]; local state=epicUpgradeState[upgradeId]
 	if not ref or not state then return end
 
-	-- ? THE FAILSAFE: Force the glossy theme to re-apply every single upgrade!
 	if UITheme and UITheme.Apply then
 		UITheme.Apply(ref.frame, "ShopCard")
 	end
@@ -4658,32 +4640,20 @@ function UpdateEpicCard(upgradeId)
 	ref.levelLabel.Text="Lv. "..state.level.." / "..state.maxLevel
 
 	if state.level >= state.maxLevel then
-		-- ? THE MAGIC: Sink to the absolute bottom!
 		ref.frame.LayoutOrder = (ref.baseOrder or 0) + 100000 
-
 		ref.levelLabel.TextColor3=Color3.fromRGB(255, 215, 0)
 		ref.buyButton.Text="MAX"
 		ref.buyButton.TextColor3=Color3.fromRGB(255, 255, 255)
 		ref.buyButton.BackgroundColor3=Color3.fromRGB(100, 100, 100)
-
-		if not ref.frame:GetAttribute("HasMaxedOut") then
-			ref.frame:SetAttribute("HasMaxedOut", true)
-			local scale = ref.frame:FindFirstChildOfClass("UIScale") or Instance.new("UIScale", ref.frame)
-			TweenService:Create(scale, TweenInfo.new(0.4, Enum.EasingStyle.Bounce), {Scale = 1.05}):Play()
-			task.delay(0.4, function() TweenService:Create(scale, TweenInfo.new(0.2), {Scale = 1}):Play() end)
-			PlayUIBurst(ref.frame, 20, Color3.fromRGB(180, 100, 255))
-			PlayFeedbackSound("MaxOut", 0.6) 
-		end
 	else
-		-- ? Keeps its standard position if not maxed
 		ref.frame.LayoutOrder = ref.baseOrder or 0 
 
 		if liveGoldenAuras<state.cost then
-			ref.buyButton.Text="? "..FormatNumber(state.cost)
+			ref.buyButton.Text="✦ "..FormatNumber(state.cost)
 			ref.buyButton.TextColor3=Color3.fromRGB(255, 100, 100) 
 			ref.buyButton.BackgroundColor3=Color3.fromRGB(150, 80, 255) 
 		else
-			ref.buyButton.Text="? "..FormatNumber(state.cost)
+			ref.buyButton.Text="✦ "..FormatNumber(state.cost)
 			ref.buyButton.TextColor3=Color3.fromRGB(255, 255, 255) 
 			ref.buyButton.BackgroundColor3=Color3.fromRGB(150, 80, 255) 
 		end
@@ -4700,7 +4670,7 @@ local function CreateTierHeader(tierName)
 	label.Size = UDim2.new(1, 0, 1, -5); label.Position = UDim2.new(0, 0, 0, 0); label.BackgroundTransparency = 1
 	label.Text = string.upper(tierName); label.TextColor3 = Color3.fromRGB(220, 220, 220)
 	label.TextSize = 16; label.Font = Enum.Font.GothamBlack; 
-	label.TextXAlignment = Enum.TextXAlignment.Left -- ? EXACTLY LIKE YOUR ARROW!
+	label.TextXAlignment = Enum.TextXAlignment.Left 
 	label.Parent = header
 
 	local line = Instance.new("Frame")
@@ -4712,7 +4682,7 @@ end
 local function CreateLockedTierHeader(tierName, current, required)
 	local header = Instance.new("Frame")
 	header.Name = "TierHeader_Locked"; header.Size = UDim2.new(1, 0, 0, 45); header.BackgroundTransparency = 1
-	header:SetAttribute("Required", required) -- ? Store the requirement for Fix 1
+	header:SetAttribute("Required", required) 
 
 	local label = Instance.new("TextLabel")
 	label.Size = UDim2.new(1, 0, 0.5, 0); label.Position = UDim2.new(0, 0, 0, 0); label.BackgroundTransparency = 1
@@ -4721,7 +4691,7 @@ local function CreateLockedTierHeader(tierName, current, required)
 	label.TextXAlignment = Enum.TextXAlignment.Left; label.Parent = header
 
 	local progress = Instance.new("TextLabel")
-	progress.Name = "ProgressLabel" -- ? Give it a name so we can find it!
+	progress.Name = "ProgressLabel" 
 	progress.Size = UDim2.new(1, 0, 0.4, 0); progress.Position = UDim2.new(0, 0, 0.6, 0); progress.BackgroundTransparency = 1
 	progress.Text = current .. " / " .. required .. " Upgrades Needed"
 	progress.TextColor3 = Color3.fromRGB(255, 100, 100) 
@@ -4746,7 +4716,7 @@ local function RebuildRegularShop()
 	local totalUpgradesBought = 0
 	for _, state in pairs(upgradeState) do totalUpgradesBought = totalUpgradesBought + (state.level or 0) end
 
-	local listOrder = 1 -- ? Tracks the vertical layout order!
+	local listOrder = 1 
 
 	for tierNum, tierData in ipairs(UpgradeConfig.Tiers) do
 		if totalUpgradesBought >= tierData.unlockRequirement then
@@ -4760,7 +4730,12 @@ local function RebuildRegularShop()
 				local ref = regularCardRefs[upgradeId]
 
 				if ref and ref.frame then
-					-- ? Save its original position so it knows where to go back to if needed
+					-- ✨ THE FIX: Just these 3 lines! (Deleted the old local buyBtn line)
+					if ref.buyButton then
+						ref.buyButton.Name = "Buy_" .. upgradeId
+					end
+					-- ✨ ==========================================
+
 					ref.baseOrder = listOrder
 					ref.frame.LayoutOrder = listOrder
 					listOrder += 1
@@ -4783,7 +4758,11 @@ local function RebuildRegularShop()
 	end
 	UpdateAllRegularCards()
 end 
-RebuildRegularShop() -- Run it once on startup
+RebuildRegularShop() 
+
+task.delay(1, function()
+	isLoadingData = false
+end)
 
 function UpdateCurrencyDisplay()
 	if activeMainTab=="Upgrades" then
@@ -4883,51 +4862,33 @@ RunService.Heartbeat:Connect(function(dt)
 	end
 end)
 
-local highestUnlockedReq = -1 
-
+---------------------------------------------------------------
+-- SERVER EVENTS (Cleaned of Sound/UI logic)
+---------------------------------------------------------------
 if UpgradeUpdated then
 	UpgradeUpdated.OnClientEvent:Connect(function(info)
 		if info.type=="fullState" then
 			upgradeState=info.upgrades; currentCurrency=info.currency; 
-			highestUnlockedReq = -1
 			RebuildRegularShop()
 			UpdateCurrencyDisplay()
+
 		elseif info.type=="purchased" then
-			local current=upgradeState[info.upgradeId]
-			if not current or info.level>=current.level then
+			local current = upgradeState[info.upgradeId]
+
+			if not current or info.level >= current.level then
 				upgradeState[info.upgradeId]={level=info.level,maxLevel=info.maxLevel,cost=info.cost,maxed=info.maxed}
 			end
-			currentCurrency = info.currency or currentCurrency
+			currentCurrency = info.currency
 
-			UpdateRegularCard(info.upgradeId)
+			local scroll = ShopPanel:FindFirstChild("RegularScroll")
+			local savedScroll = scroll and scroll.CanvasPosition or Vector2.new(0, 0)
+
+			-- ✨ Safely updates the shop tiers WITHOUT triggering ghost sounds!
+			RebuildRegularShop()
 			UpdateCurrencyDisplay()
 
-			-- ? THE FIX: Calculate total and update the LOCKED header live
-			local total = 0
-			for _, s in pairs(upgradeState) do total = total + (s.level or 0) end
-
-			-- Find the locked header if it exists and update the text instantly
-			local lockedHeader = RegularScroll:FindFirstChild("TierHeader_Locked")
-			if lockedHeader then
-				local progressLabel = lockedHeader:FindFirstChild("ProgressLabel")
-				local req = lockedHeader:GetAttribute("Required") or 0
-				if progressLabel then
-					progressLabel.Text = total .. " / " .. req .. " Upgrades Needed"
-				end
-			end
-
-			-- Check if we should actually UNLOCK the next tier
-			local maxReq = 0
-			for _, t in ipairs(UpgradeConfig.Tiers) do
-				if total >= t.unlockRequirement and t.unlockRequirement > maxReq then
-					maxReq = t.unlockRequirement
-				end
-			end
-
-			if maxReq > highestUnlockedReq then
-				highestUnlockedReq = maxReq
-				RebuildRegularShop() 
-				PlayFeedbackSound("TierUnlock", 0.8)
+			if scroll then
+				scroll.CanvasPosition = savedScroll
 			end
 		end
 	end)
@@ -4938,11 +4899,14 @@ if EpicUpgradeUpdated then
 		if info.type=="fullState" then
 			epicUpgradeState=info.upgrades; liveGoldenAuras=info.goldenAuras or liveGoldenAuras
 			UpdateAllEpicCards(); UpdateCurrencyDisplay()
+
 		elseif info.type=="purchased" then
-			local current=epicUpgradeState[info.upgradeId]
-			if not current or info.level>=current.level then
+			local current = epicUpgradeState[info.upgradeId]
+
+			if not current or info.level >= current.level then
 				epicUpgradeState[info.upgradeId]={level=info.level,maxLevel=info.maxLevel,cost=info.cost,maxed=info.maxed}
-			end; UpdateEpicCard(info.upgradeId); UpdateCurrencyDisplay()
+			end
+			UpdateEpicCard(info.upgradeId); UpdateCurrencyDisplay()
 		end
 	end)
 end
@@ -4951,38 +4915,31 @@ end
 -- UI JUICE: Button Hover & Click Animations
 ---------------------------------------------------------------
 local function AddButtonJuice(btn)
-	-- Ensure the button has a UIScale object to animate
 	local scale = btn:FindFirstChildOfClass("UIScale")
 	if not scale then
 		scale = Instance.new("UIScale")
 		scale.Parent = btn
 	end
 
-	-- Hover in: Slight grow
 	btn.MouseEnter:Connect(function()
 		TweenService:Create(scale, TweenInfo.new(0.15, Enum.EasingStyle.Sine), {Scale = 1.08}):Play()
 	end)
 
-	-- Hover out: Return to normal
 	btn.MouseLeave:Connect(function()
 		TweenService:Create(scale, TweenInfo.new(0.15, Enum.EasingStyle.Sine), {Scale = 1}):Play()
 	end)
 
-	-- Click down: Shrink inwards
 	btn.MouseButton1Down:Connect(function()
 		TweenService:Create(scale, TweenInfo.new(0.1, Enum.EasingStyle.Sine), {Scale = 0.9}):Play()
 	end)
 
-	-- Release click: Bounce back to hover size
 	btn.MouseButton1Up:Connect(function()
 		TweenService:Create(scale, TweenInfo.new(0.2, Enum.EasingStyle.Bounce), {Scale = 1.08}):Play()
 	end)
 end
 
--- ? Apply the juice to your Area Browser buttons!
 AddButtonJuice(ShopButton)
 AddButtonJuice(CloseButton)
-
 
 ---------------------------------------------------------------
 -- REFRESH LOOK + APPLY SHINE TO TITLE BAR
@@ -4993,9 +4950,8 @@ local TitleShine = nil
 local function RefreshLook()
 	UITheme.Apply(ShopPanel, "Panel")
 	UITheme.Apply(ShopPanel, "TitleBar")
-	UITheme.Apply(InfoPopup, "Panel") -- 'Panel' usually looks best for big floating boxes
+	UITheme.Apply(InfoPopup, "Panel") 
 	UITheme.ApplyShine(InfoPopup)
-	UITheme.Apply(InfoPopup, "Panel") -- 'Panel' usually looks best for big floating boxes
 	if not shopShine then
 		shopShine = UITheme.ApplyShine(ShopPanel)
 		TitleShine = UITheme.ApplyShine(TitleBar)
@@ -5005,10 +4961,8 @@ local function RefreshLook()
 		titleFlair = UITheme.ApplyFlair(TitleLabel, "Ghost")
 	end
 
-	
-	-- ? THE FIX: Force all scrolls to obey LayoutOrder math!
 	for _, scrollName in ipairs({"RegularScroll", "EpicScroll"}) do
-		local scroll = ShopPanel:FindFirstChild(scrollName) -- Make sure ShopPanel is defined above this!
+		local scroll = ShopPanel:FindFirstChild(scrollName) 
 		if scroll then
 			local layout = scroll:FindFirstChildOfClass("UIListLayout")
 			if layout then
@@ -5018,7 +4972,7 @@ local function RefreshLook()
 	end
 	local outerStroke = ShopPanel:FindFirstChildWhichIsA("UIStroke")
 	if outerStroke then
-		outerStroke.Color = Color3.fromRGB(255, 255, 255) -- Change these RGB numbers to whatever color you want!
+		outerStroke.Color = Color3.fromRGB(255, 255, 255) 
 	end
 end
 
