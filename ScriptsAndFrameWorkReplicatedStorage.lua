@@ -1137,11 +1137,11 @@ local AdminConfig = require(game:GetService("ReplicatedStorage").Modules.AdminCo
 local TierConfig = {}
 
 TierConfig.Tiers = {
-	{ name = "Common",    chance = 0.70,  multiplier = 1,   color = Color3.fromRGB(220, 220, 220), glow = false },
-	{ name = "Uncommon",  chance = 0.20,  multiplier = 2,   color = Color3.fromRGB(80, 200, 80),   glow = true  },
-	{ name = "Rare",      chance = 0.07,  multiplier = 5,   color = Color3.fromRGB(60, 120, 255),  glow = true  },
-	{ name = "Epic",      chance = 0.025, multiplier = 20,  color = Color3.fromRGB(180, 60, 255),  glow = true  },
-	{ name = "Legendary", chance = 0.005, multiplier = 100, color = Color3.fromRGB(255, 200, 0),   glow = true  },
+	{ name = "Common",    chance = 0.75,   multiplier = 1,   color = Color3.fromRGB(220, 220, 220), glow = false },
+	{ name = "Uncommon",  chance = 0.17,   multiplier = 1.5, color = Color3.fromRGB(80, 200, 80),   glow = true  },
+	{ name = "Rare",      chance = 0.06,   multiplier = 3,   color = Color3.fromRGB(60, 120, 255),  glow = true  },
+	{ name = "Epic",      chance = 0.018,  multiplier = 8,   color = Color3.fromRGB(180, 60, 255),  glow = true  },
+	{ name = "Legendary", chance = 0.002,  multiplier = 25,  color = Color3.fromRGB(255, 200, 0),   glow = true  },
 }
 
 if AdminConfig.TierOverride then
