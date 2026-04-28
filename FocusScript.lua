@@ -138,7 +138,11 @@ local function RefreshData()
 end
 
 UpdateHUD.OnClientEvent:Connect(function(stats)
-	latestStats = stats
+	-- ✨ THE FIX: Merges new data instead of deleting old data!
+	for key, value in pairs(stats) do
+		latestStats[key] = value
+	end
+	
 	if panelOpen then RefreshData() end
 end)
 
@@ -444,7 +448,7 @@ local function BuildCards()
 		invBadge.ZIndex = 43; invBadge.Parent = card
 		Instance.new("UICorner", invBadge).CornerRadius = UDim.new(0, 4)
 
-		cardRefs[boostId] = { card=card, cs=cs, buyBtn=buyBtn, actBtn=actBtn, invBadge=invBadge, color=color }
+		cardRefs[boostId] = { card=card, cs=cs, buyBtn=buyBtn, actBtn=actBtn, invBadge=invBadge, descLbl=descLbl, color=color }
 
 		buyBtn.MouseButton1Down:Connect(function() BuyBoost:FireServer(boostId) end)
 		actBtn.MouseButton1Down:Connect(function()
@@ -548,8 +552,10 @@ BoostUpdated.OnClientEvent:Connect(function(state)
 	if panelOpen then RefreshCards() end
 end)
 UpdateHUD.OnClientEvent:Connect(function(stats)
-	latestStats = stats 
-	if stats.goldenAuras ~= nil then liveGold = stats.goldenAuras end
+for key, value in pairs(stats) do
+		latestStats[key] = value
+	end
+		if stats.goldenAuras ~= nil then liveGold = stats.goldenAuras end
 	if stats.boostInventory then
 		for boostId, count in pairs(stats.boostInventory) do
 			if boostState[boostId] then boostState[boostId].inventoryCount = count end
