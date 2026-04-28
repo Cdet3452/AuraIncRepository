@@ -1,400 +1,92 @@
 local AdminConfig = {}
 
+AdminConfig.FireRate             = 0.25
+AdminConfig.BaseAuraValue        = 1
+AdminConfig.BaseHabitatCapacity  = 60
+AdminConfig.ShipInterval         = 6
+AdminConfig.TierOverride         = nil
+AdminConfig.WipeMoneyOnLoad      = true
+AdminConfig.WipePrestigeOnLoad   = true  
+AdminConfig.WipeAchievementsOnLoad = true
+AdminConfig.WipeAreaOnLoad       = true  
+AdminConfig.WipeEpicOnLoad = true
+AdminConfig.AutoDispatch         = false
 
--- ══════════ DEVELOPER ECONOMY CHEAT SHEET ══════════
+AdminConfig.PlatformCapacity     = 25
+AdminConfig.PlatformSpeed        = 20
+AdminConfig.PlatformHoverHeight  = 5
+AdminConfig.MaxTrucks            = 3
+AdminConfig.PassiveInterval      = 10
 
--- [ Hundreds ]
--- 5e1  = 50
--- 5e2  = 500
-
--- [ Thousands (k) ]
--- 5e3  = 5k
--- 5e4  = 50k
--- 5e5  = 500k
-
--- [ Millions (M) ]
--- 5e6  = 5M
--- 5e7  = 50M
--- 5e8  = 500M
-
--- [ Billions (B) ]
--- 5e9  = 5B
--- 5e10 = 50B
--- 5e11 = 500B
-
--- [ Trillions (T) ]
--- 5e12 = 5T
--- 5e13 = 50T
--- 5e14 = 500T
-
--- [ Quadrillions (Qa) ]
--- 5e15 = 5Qa
--- 5e16 = 50Qa
--- 5e17 = 500Qa
-
--- [ Quintillions (Qi) ]
--- 5e18 = 5Qi
--- 5e19 = 50Qi
--- 5e20 = 500Qi
-
--- [ Sextillions (Sx) ]
--- 5e21 = 5Sx
--- 5e22 = 50Sx
--- 5e23 = 500Sx
-
--- [ Septillions (Sp) ]
--- 5e24 = 5Sp
--- 5e25 = 50Sp
--- 5e26 = 500Sp
-
--- [ Octillions (Oc) ]
--- 5e27 = 5Oc
--- 5e28 = 50Oc
--- 5e29 = 500Oc
-
--- [ Nonillions (No) ]
--- 5e30 = 5No
--- 5e31 = 50No
--- 5e32 = 500No
-
--- [ Decillions (Dc) ]
--- 5e33 = 5Dc
--- 5e34 = 50Dc
--- 5e35 = 500Dc
-
--- ══════════ ROMAN NUMERAL RANKS ══════════
-
--- [ Rank I ]
--- 5e36 = 5 I
--- 5e37 = 50 I
--- 5e38 = 500 I
-
--- [ Rank II ]
--- 5e39 = 5 II
--- 5e40 = 50 II
--- 5e41 = 500 II
-
--- [ Rank III ]
--- 5e42 = 5 III
--- 5e43 = 50 III
--- 5e44 = 500 III
-
--- [ Rank IV ]
--- 5e45 = 5 IV
--- 5e46 = 50 IV
--- 5e47 = 500 IV
-
--- [ Rank V ]
--- 5e48 = 5 V
--- 5e49 = 50 V
--- 5e50 = 500 V
-
--- [ Rank VI ]
--- 5e51 = 5 VI
--- 5e52 = 50 VI
--- 5e53 = 500 VI
-
--- [ Rank VII ]
--- 5e54 = 5 VII
--- 5e55 = 50 VII
--- 5e56 = 500 VII
-
--- [ Rank VIII ]
--- 5e57 = 5 VIII
--- 5e58 = 50 VIII
--- 5e59 = 500 VIII
-
--- [ Rank IX ]
--- 5e60 = 5 IX
--- 5e61 = 50 IX
--- 5e62 = 500 IX
-
--- [ Rank X ]
--- 5e63 = 5 X
--- 5e64 = 50 X
--- 5e65 = 500 X
-
--- [ Rank XI ]
--- 5e66 = 5 XI
--- 5e67 = 50 XI
--- 5e68 = 500 XI
-
--- [ Rank XII ]
--- 5e69 = 5 XII
--- 5e70 = 50 XII
--- 5e71 = 500 XII
-
--- ═══════════════════════════════════════════════════
-local AreaRegistry = {}
-
-AreaRegistry.LightingPresets = {
-
-	-- 🏭 PHASE 1: THE GRIME (Areas 1-3)
-	["Area1_DeepScrapyard"] = {
-		ClockTime = 12, Brightness = 0.3, SunRaysIntensity = 0,
-		Ambient = Color3.fromRGB(70, 60, 50), FogColor = Color3.fromRGB(90, 80, 65),
-		FogStart = 20, FogEnd = 60, Density = 0.7, Haze = 10, AtmosphereColor = Color3.fromRGB(90, 80, 65)
-	},
-	["Area2_RustyWastes"] = {
-		ClockTime = 14, Brightness = 0.4, SunRaysIntensity = 0,
-		Ambient = Color3.fromRGB(80, 65, 50), FogColor = Color3.fromRGB(100, 85, 60),
-		FogStart = 20, FogEnd = 80, Density = 0.6, Haze = 8, AtmosphereColor = Color3.fromRGB(100, 85, 60)
-	},
-	["Area3_IndustrialOutskirts"] = {
-		ClockTime = 16, Brightness = 0.5, SunRaysIntensity = 0,
-		Ambient = Color3.fromRGB(85, 75, 65), FogColor = Color3.fromRGB(110, 100, 90),
-		FogStart = 30, FogEnd = 100, Density = 0.55, Haze = 6, AtmosphereColor = Color3.fromRGB(110, 100, 90)
-	},
-
-	-- ☣️ PHASE 2: TOXIC ZONES (Areas 4-5)
-	["Area4_ChemicalSpill"] = {
-		ClockTime = 17, Brightness = 0.4, SunRaysIntensity = 0,
-		Ambient = Color3.fromRGB(60, 75, 50), FogColor = Color3.fromRGB(75, 90, 55),
-		FogStart = 50, FogEnd = 110, Density = 0.5, Haze = 7, AtmosphereColor = Color3.fromRGB(75, 90, 55)
-	},
-	["Area5_BioHazard"] = {
-		ClockTime = 17.5, Brightness = 0.3, SunRaysIntensity = 0,
-		Ambient = Color3.fromRGB(40, 60, 40), FogColor = Color3.fromRGB(45, 80, 45),
-		FogStart = 60, FogEnd = 120, Density = 0.4, Haze = 5, AtmosphereColor = Color3.fromRGB(45, 80, 45)
-	},
-
-	-- 🌆 PHASE 3: TWILIGHT SLUMS (Areas 6-8)
-	["Area6_SunsetStrip"] = {
-		ClockTime = 17.8, Brightness = 0.6, SunRaysIntensity = 0.1, -- Sun peeks through!
-		Ambient = Color3.fromRGB(70, 40, 40), FogColor = Color3.fromRGB(90, 40, 30),
-		FogStart = 20, FogEnd = 150, Density = 0.5, Haze = 4, AtmosphereColor = Color3.fromRGB(120, 50, 40)
-	},
-	["Area7_TwilightSector"] = {
-		ClockTime = 18.2, Brightness = 0.4, SunRaysIntensity = 0,
-		Ambient = Color3.fromRGB(40, 30, 60), FogColor = Color3.fromRGB(35, 25, 55),
-		FogStart = 20, FogEnd = 180, Density = 0.55, Haze = 4, AtmosphereColor = Color3.fromRGB(35, 25, 55)
-	},
-	["Area8_NeonSlums"] = {
-		ClockTime = 0, Brightness = 0.5, SunRaysIntensity = 0,
-		Ambient = Color3.fromRGB(30, 20, 50), FogColor = Color3.fromRGB(20, 10, 40),
-		FogStart = 25, FogEnd = 200, Density = 0.5, Haze = 3, AtmosphereColor = Color3.fromRGB(40, 20, 80)
-	},
-
-	-- 🌃 PHASE 4: CYBER CITY (Areas 9-10)
-	["Area9_LowerCyber"] = {
-		ClockTime = 0, Brightness = 0.7, SunRaysIntensity = 0,
-		Ambient = Color3.fromRGB(25, 25, 55), FogColor = Color3.fromRGB(15, 15, 45),
-		FogStart = 30, FogEnd = 250, Density = 0.4, Haze = 2, AtmosphereColor = Color3.fromRGB(20, 20, 60)
-	},
-	["Area10_CyberCore"] = {
-		ClockTime = 0, Brightness = 1, SunRaysIntensity = 0,
-		Ambient = Color3.fromRGB(20, 30, 60), FogColor = Color3.fromRGB(10, 20, 50),
-		FogStart = 50, FogEnd = 400, Density = 0.25, Haze = 1, AtmosphereColor = Color3.fromRGB(15, 25, 65)
-	},
-
-	-- 🌐 PHASE 5: CORPORATE STERILITY (Areas 11-13)
-	["Area11_GlassFacility"] = {
-		ClockTime = 12, Brightness = 2.0, SunRaysIntensity = 0.4, -- Blinding sudden daylight
-		Ambient = Color3.fromRGB(130, 130, 140), FogColor = Color3.fromRGB(200, 220, 240),
-		FogStart = 100, FogEnd = 1500, Density = 0.15, Haze = 0, AtmosphereColor = Color3.fromRGB(200, 220, 240)
-	},
-	["Area12_CrystalLab"] = {
-		ClockTime = 14, Brightness = 2.5, SunRaysIntensity = 0.5,
-		Ambient = Color3.fromRGB(150, 150, 150), FogColor = Color3.fromRGB(220, 240, 255),
-		FogStart = 150, FogEnd = 2500, Density = 0.1, Haze = 0, AtmosphereColor = Color3.fromRGB(220, 240, 255)
-	},
-	["Area13_QuantumGrid"] = {
-		ClockTime = 14, Brightness = 2.2, SunRaysIntensity = 0.3,
-		Ambient = Color3.fromRGB(100, 180, 200), FogColor = Color3.fromRGB(150, 255, 255),
-		FogStart = 200, FogEnd = 3000, Density = 0.05, Haze = 0, AtmosphereColor = Color3.fromRGB(150, 255, 255)
-	},
-
-	-- 🌌 PHASE 6: REALITY BREAKING (Areas 14-16)
-	["Area14_PlasmaCore"] = {
-		ClockTime = 17.5, Brightness = 1.8, SunRaysIntensity = 0.3,
-		Ambient = Color3.fromRGB(150, 80, 150), FogColor = Color3.fromRGB(200, 100, 200),
-		FogStart = 100, FogEnd = 2000, Density = 0.2, Haze = 2, AtmosphereColor = Color3.fromRGB(200, 100, 200)
-	},
-	["Area15_CosmicRift"] = {
-		ClockTime = 6, Brightness = 1.5, SunRaysIntensity = 0.2,
-		Ambient = Color3.fromRGB(100, 30, 150), FogColor = Color3.fromRGB(70, 0, 100),
-		FogStart = 50, FogEnd = 1000, Density = 0.3, Haze = 4, AtmosphereColor = Color3.fromRGB(150, 0, 255)
-	},
-	["Area16_DarkMatter"] = {
-		ClockTime = 0, Brightness = 0.8, SunRaysIntensity = 0,
-		Ambient = Color3.fromRGB(80, 10, 20), FogColor = Color3.fromRGB(40, 0, 5),
-		FogStart = 30, FogEnd = 600, Density = 0.5, Haze = 6, AtmosphereColor = Color3.fromRGB(120, 0, 10)
-	},
-
-	-- ⬛ PHASE 7: THE VOID (Areas 17-20)
-	["Area17_EventHorizon"] = {
-		ClockTime = 0, Brightness = 0.4, SunRaysIntensity = 0,
-		Ambient = Color3.fromRGB(30, 10, 40), FogColor = Color3.fromRGB(15, 5, 20),
-		FogStart = 50, FogEnd = 800, Density = 0.3, Haze = 3, AtmosphereColor = Color3.fromRGB(20, 5, 30)
-	},
-	["Area18_DeepSpace"] = {
-		ClockTime = 0, Brightness = 0.2, SunRaysIntensity = 0,
-		Ambient = Color3.fromRGB(15, 15, 25), FogColor = Color3.fromRGB(5, 5, 15),
-		FogStart = 100, FogEnd = 1500, Density = 0.15, Haze = 1, AtmosphereColor = Color3.fromRGB(5, 5, 15)
-	},
-	["Area19_TheAbyss"] = {
-		ClockTime = 0, Brightness = 0.05, SunRaysIntensity = 0,
-		Ambient = Color3.fromRGB(5, 5, 5), FogColor = Color3.fromRGB(2, 2, 2),
-		FogStart = 200, FogEnd = 3000, Density = 0.05, Haze = 0, AtmosphereColor = Color3.fromRGB(2, 2, 2)
-	},
-	["Area20_UniversalVoid"] = {
-		ClockTime = 0, Brightness = 0, SunRaysIntensity = 0,
-		Ambient = Color3.fromRGB(0, 0, 0), FogColor = Color3.fromRGB(0, 0, 0),
-		FogStart = 500, FogEnd = 5000, Density = 0, Haze = 0, AtmosphereColor = Color3.fromRGB(0, 0, 0)
-	}
+AdminConfig.MilestoneData = {
+	[1] = {time = 0, mult = 1.0, luck = 0,    name = "NORMAL",     color = Color3.fromRGB(255, 0, 0),    sound = "rbxassetid://6102885137"},
+	[2] = {time = 1, mult = 1.5, luck = 0.05, name = "UNCOMMON!",  color = Color3.fromRGB(100, 200, 100), sound = "Landing"},
+	[3] = {time = 2, mult = 2.0, luck = 0.10, name = "RARE!",      color = Color3.fromRGB(80, 120, 220),  sound = "rbxassetid://4767117600"},
+	[4] = {time = 4, mult = 3.0, luck = 0.15, name = "EPIC!",      color = Color3.fromRGB(180, 80, 220),  sound = "Epic"},
+	[5] = {time = 7, mult = 5.0, luck = 0.20, name = "LEGENDARY!", color = Color3.fromRGB(255, 200, 50),  sound = "rbxassetid://6875009415"},
+	[6] = {time = 12, mult = 10.0, luck = 0.30, name = "MYTHIC!",  color = Color3.fromRGB(157, 0, 255),   sound = "rbxassetid://1843115950"},
+	-- ✨ THE COSMIC TIERS (Egg Inc style exponential leaps!)
+	[7] = {time = 20, mult = 25.0, luck = 0.45, name = "COSMIC!",  color = Color3.fromRGB(0, 255, 255),   sound = "rbxassetid://123182143898652"},
+	[8] = {time = 35, mult = 100.0,luck = 0.60, name = "GODLY!",   color = Color3.fromRGB(255, 255, 0),   sound = "rbxassetid://73678054568493"},
+	[9] = {time = 55, mult = 500.0,luck = 0.80, name = "UNIVERSAL!",color= Color3.fromRGB(255, 255, 255), sound = "rbxassetid://4914399472"},
+	[10]= {time = 90, mult = 2500.0,luck=1.00,  name = "OMNI!",    color = Color3.fromRGB(20, 20, 20),    sound = "rbxassetid://6176998903"},
 }
 
-AreaRegistry.Areas = {
-	-- [ TUTORIAL AREAS 1-5 KEPT THE SAME ]
-	[1] = { name = "Starter Area",     threshold = 0,   valueMultiplier = 1.0, yOffset = -2.7, yRotation = 180, auraPreviewColor = Color3.fromRGB(200, 200, 200), grassColor = Color3.fromRGB(92, 197, 53), pathColor = Color3.fromRGB(163, 130, 88), ambientColor = Color3.fromRGB(90, 90, 100), fogColor = Color3.fromRGB(180, 200, 220), auraHolderColor = Color3.fromRGB(255, 255, 255), auraHolderGlow = Color3.fromRGB(255, 255, 255), lightingPreset = "Area1_DeepScrapyard" },
-	[2] = { name = "Uncommon Area",    threshold = 5e4, valueMultiplier = 1.5, yOffset = -4.5, yRotation = 180, auraPreviewColor = Color3.fromRGB(100, 200, 100), grassColor = Color3.fromRGB(104, 160, 98), pathColor = Color3.fromRGB(132, 140, 81), ambientColor = Color3.fromRGB(80, 100, 80), fogColor = Color3.fromRGB(160, 200, 160), auraHolderColor = Color3.fromRGB(187, 255, 183), auraHolderGlow = Color3.fromRGB(100, 255, 100), lightingPreset = "Area2_RustyWastes" },
-	[3] = { name = "Rare Area",        threshold = 5e5, valueMultiplier = 4.0, yOffset = -2.8, yRotation = 180, auraPreviewColor = Color3.fromRGB(80, 120, 220), grassColor = Color3.fromRGB(2, 226, 170), pathColor = Color3.fromRGB(22, 81, 168), ambientColor = Color3.fromRGB(70, 80, 130), fogColor = Color3.fromRGB(92, 169, 220), auraHolderColor = Color3.fromRGB(75, 87, 255), auraHolderGlow = Color3.fromRGB(56, 86, 255), lightingPreset = "Area3_IndustrialOutskirts" },
-	[4] = { name = "Epic Area",        threshold = 5e6, valueMultiplier = 8.0, yOffset = -2.8, yRotation = 180, auraPreviewColor = Color3.fromRGB(180, 80, 220), grassColor = Color3.fromRGB(154, 102, 175), pathColor = Color3.fromRGB(71, 34, 90), ambientColor = Color3.fromRGB(90, 50, 120), fogColor = Color3.fromRGB(160, 120, 200), auraHolderColor = Color3.fromRGB(220, 160, 255), auraHolderGlow = Color3.fromRGB(180, 60, 255), lightingPreset = "Area4_ChemicalSpill" },
-	[5] = { name = "Legendary Area",   threshold = 5e7, valueMultiplier = 20.0,yOffset = -3,   yRotation = 0,   auraPreviewColor = Color3.fromRGB(255, 200, 50), grassColor = Color3.fromRGB(160, 120, 20), pathColor = Color3.fromRGB(180, 150, 60), ambientColor = Color3.fromRGB(140, 120, 60), fogColor = Color3.fromRGB(220, 200, 150), auraHolderColor = Color3.fromRGB(255, 230, 120), auraHolderGlow = Color3.fromRGB(255, 180, 0), lightingPreset = "Area5_BioHazard" },
+AdminConfig.HatcheryMax              = 150
+AdminConfig.HatcheryDrainRate        = 8
+AdminConfig.HatcheryRefillRate       = 12
+AdminConfig.HatcheryInstantLegendary = false
+AdminConfig.HatcheryFastRefill       = false
 
-	-- ✨ THE COSMIC PROGRESSION BEGINS (Egg Inc Style leaps)
-	[6] = {
-		name            = "Quantum Area",
-		threshold       = 5e9, -- 5 Billion
-		valueMultiplier = 75.0,
-		yOffset         = -4.5,
-		yRotation       = 180,
-		auraPreviewColor = Color3.fromRGB(0, 255, 255),
-		grassColor        = Color3.fromRGB(0, 150, 150),
-		pathColor         = Color3.fromRGB(0, 100, 100),
-		ambientColor      = Color3.fromRGB(50, 200, 200),
-		fogColor          = Color3.fromRGB(150, 255, 255),
-		auraHolderColor   = Color3.fromRGB(0, 255, 255),
-		auraHolderGlow    = Color3.fromRGB(255, 255, 255),
-	},
-	[7] = {
-		name            = "Cosmic Area",
-		threshold       = 5e12, -- 5 Trillion
-		valueMultiplier = 350.0,
-		yOffset         = -4.5,
-		yRotation       = 180,
-		auraPreviewColor = Color3.fromRGB(138, 43, 226),
-		grassColor        = Color3.fromRGB(75, 0, 130),
-		pathColor         = Color3.fromRGB(48, 25, 52),
-		ambientColor      = Color3.fromRGB(147, 112, 219),
-		fogColor          = Color3.fromRGB(216, 191, 216),
-		auraHolderColor   = Color3.fromRGB(138, 43, 226),
-		auraHolderGlow    = Color3.fromRGB(255, 0, 255),
-	},
-	[8] = {
-		name            = "Tachyon Area",
-		threshold       = 5e15, -- 5 Quadrillion
-		valueMultiplier = 2500.0,
-		yOffset         = -4.5,
-		yRotation       = 180,
-		auraPreviewColor = Color3.fromRGB(255, 255, 0),
-		grassColor        = Color3.fromRGB(200, 200, 0),
-		pathColor         = Color3.fromRGB(255, 140, 0),
-		ambientColor      = Color3.fromRGB(255, 215, 0),
-		fogColor          = Color3.fromRGB(255, 250, 205),
-		auraHolderColor   = Color3.fromRGB(255, 255, 0),
-		auraHolderGlow    = Color3.fromRGB(255, 165, 0),
-	},
-	[9] = {
-		name            = "Dark Matter Area",
-		threshold       = 5e19, -- 50 Quintillion
-		valueMultiplier = 50000.0,
-		yOffset         = -4.5,
-		yRotation       = 180,
-		auraPreviewColor = Color3.fromRGB(20, 0, 0),
-		grassColor        = Color3.fromRGB(15, 15, 15),
-		pathColor         = Color3.fromRGB(30, 0, 0),
-		ambientColor      = Color3.fromRGB(50, 0, 0),
-		fogColor          = Color3.fromRGB(10, 0, 0),
-		auraHolderColor   = Color3.fromRGB(0, 0, 0),
-		auraHolderGlow    = Color3.fromRGB(255, 0, 0),
-	},
-	[10] = {
-		name            = "Universal Area",
-		threshold       = 5e25, -- 50 Septillion
-		valueMultiplier = 1000000.0,
-		yOffset         = -4.5,
-		yRotation       = 180,
-		auraPreviewColor = Color3.fromRGB(255, 255, 255),
-		grassColor        = Color3.fromRGB(240, 248, 255),
-		pathColor         = Color3.fromRGB(211, 211, 211),
-		ambientColor      = Color3.fromRGB(255, 250, 250),
-		fogColor          = Color3.fromRGB(255, 255, 255),
-		auraHolderColor   = Color3.fromRGB(255, 255, 255),
-		auraHolderGlow    = Color3.fromRGB(255, 215, 0),
-	},
-}
+AdminConfig.MutationSpeedMultiplier  = 1
+AdminConfig.MutationTickInterval     = 1
+AdminConfig.MutationInstantMax       = false
+AdminConfig.MutationMaxTierIndex     = 3
 
----------------------------------------------------------------
--- BASIC GETTERS
----------------------------------------------------------------
-function AreaRegistry.Get(idx)            return AreaRegistry.Areas[idx] end
-function AreaRegistry.GetName(idx)        return (AreaRegistry.Areas[idx] and AreaRegistry.Areas[idx].name) or ("Area "..idx) end
-function AreaRegistry.GetThreshold(idx)   return AreaRegistry.Areas[idx] and AreaRegistry.Areas[idx].threshold or nil end
-function AreaRegistry.GetMultiplier(idx)  return (AreaRegistry.Areas[idx] and AreaRegistry.Areas[idx].valueMultiplier) or 1.0 end
-function AreaRegistry.GetYOffset(idx)     return (AreaRegistry.Areas[idx] and AreaRegistry.Areas[idx].yOffset)    or 0 end
-function AreaRegistry.GetYRotation(idx)   return (AreaRegistry.Areas[idx] and AreaRegistry.Areas[idx].yRotation)  or 0 end
----------------------------------------------------------------
--- LIGHTING GETTER
----------------------------------------------------------------
-function AreaRegistry.GetLighting(idx)
-	local area = AreaRegistry.Areas[idx]
-	if not area or not area.lightingPreset then 
-		return AreaRegistry.LightingPresets["ClearDay"] 
-	end
+AdminConfig.PrestigeStartBonusPercent = 0.05
+AdminConfig.TestTimerDuration         = 0
+AdminConfig.DisableShipping           = false
 
-	-- Return the preset data
-	return AreaRegistry.LightingPresets[area.lightingPreset] or AreaRegistry.LightingPresets["ClearDay"]
-end
+AdminConfig.AdminUserIds = { 2359024102, 305557572 }
 
-function AreaRegistry.GetMaxArea()
-	local max = 0
-	for k in pairs(AreaRegistry.Areas) do if k > max then max = k end end
-	return max
-end
+-- Kept for backwards compat — AreaRegistry is authoritative
+AdminConfig.AreaThresholds       = { [1]=0, [2]=5e5, [3]=5e6, [4]=5e7, [5]=5e8}
+AdminConfig.AreaValueMultipliers = { [1]=1.0, [2]=1.5, [3]=3.0, [4]=8.0, [5]=20.0}
+AdminConfig.AreaNames            = { [1]="Starter Area",[2]="Uncommon Area",[3]="Rare Area",[4]="Epic Area",[5]="Legendary Area"}
+AdminConfig.MaxArea              = 25
 
----------------------------------------------------------------
--- AREA SKIPPING — find the highest area the player qualifies for
----------------------------------------------------------------
--- Returns the best (highest) area index the player can advance to,
--- or nil if they can't advance at all.
--- Scans every area above currentArea; if farmEvaluation meets
--- the threshold, that area is a candidate.  Returns the highest one.
---
--- Example: player is in Area 1 with 6e6 farmEval.
---   Area 2 threshold = 5e5  → qualifies
---   Area 3 threshold = 5e6  → qualifies
---   Area 4 threshold = 5e7  → does NOT qualify
---   Returns 3 (skips Area 2, goes straight to Area 3).
----------------------------------------------------------------
-function AreaRegistry.GetBestNextArea(currentArea, farmEvaluation)
-	local maxArea  = AreaRegistry.GetMaxArea()
-	local bestArea = nil
+AdminConfig.GoldenAuraStart = 0
 
-	for i = currentArea + 1, maxArea do
-		local area = AreaRegistry.Areas[i]
-		if area and farmEvaluation >= (area.threshold or 0) then
-			bestArea = i
-		end
-	end
+-- AURA PHYSICS (CRANKED UP)
+AdminConfig.PhysicsSpawnMin = 10
+AdminConfig.PhysicsSpawnMax = 30
+AdminConfig.PhysicsEliteChance = 20
 
-	return bestArea
-end
+AdminConfig.PhysicsRegularDespawn = 8
+AdminConfig.PhysicsEliteDespawn = 4
 
----------------------------------------------------------------
--- LEGACY — kept for any old code that still calls CanAdvance.
--- Now uses GetBestNextArea internally.
----------------------------------------------------------------
-function AreaRegistry.CanAdvance(currentArea, farmEvaluation)
-	local best = AreaRegistry.GetBestNextArea(currentArea, farmEvaluation)
-	if best then
-		return true, best
-	end
-	return false, nil
-end
+-- AURA PHYSICS (MAX AIR TIME & WALL BOUNCES)
+AdminConfig.PhysicsUpwardForceMin = 180   -- High launch to stay in air
+AdminConfig.PhysicsUpwardForceMax = 240   
+AdminConfig.PhysicsOutwardForceMin = 150  -- High horizontal to reach the walls
+AdminConfig.PhysicsOutwardForceMax = 220  
 
-return AreaRegistry
+-- Bounce Control
+AdminConfig.PhysicsMaxBouncesRegular = 0 
+AdminConfig.PhysicsMaxBouncesElite = 2
 
+AdminConfig.PhysicsErraticIntervalMin = 0.3
+AdminConfig.PhysicsErraticIntervalMax = 0.8
+AdminConfig.PhysicsErraticForceH = 70    -- Increased for more air-time chaos
+AdminConfig.PhysicsErraticForceV = 10
+
+AdminConfig.PhysicsRegularMultiplier = 10
+AdminConfig.PhysicsEliteMultiplier = 50
+
+AdminConfig.PhysicsEliteGoldenChance = 10
+AdminConfig.PhysicsGoldenReward = 1
+
+return AdminConfig
 BoostConfig:
 -- BoostConfig
 -- Location: ReplicatedStorage > Modules > BoostConfig
@@ -1181,65 +873,39 @@ TutorialConfig.Steps = {
 		id           = "a1_hello",
 		area         = 1,
 		trigger      = "areaEnter",
-		title        = "Welcome to Aura Inc",
-		body         = "Spam Click the Red Button to Produce Auras",
+		title        = "Welcome to Aura Inc!",
+		body         = "Spam Click the Red Button to Produce Auras!",
 		target       = "ClickButton", 
 		isMandatory  = true, 
-		cameraTarget = "HabitatGUICamPos", 
-		cameraResetDelay = 20, 
 		bannerPos    = "Center",
-		unlockUI = {"ClickButton", "HatcheryBar", "CurrencyLabel", "RateLabel"},
-		nextStep     = "a1_cube",
-		icon = "rbxassetid://14922082255",
-	},
-	{
-		id           = "a1_cube",
-		area         = 1,
-		trigger      = "chain",
-		title        = "First Aura's",
-		body         = "Each Aura is Worth Cash! The Rarer it is the More It Makes",
-		duration     = 3,
-		nextStep     = "a1_hold",
-		icon = "rbxassetid://14916846070",
+		unlockUI     = {"ClickButton", "HatcheryBar", "CurrencyLabel", "RateLabel"},
+		nextStep     = "a1_hold", -- 💥 CHANGED: Skipped the cube hint. Straight to action.
+		icon         = "rbxassetid://14922082255",
 	},
 	{
 		id           = "a1_hold",
 		area         = 1,
 		trigger      = "chain",
-		title        = "Hold The Red Button",
-		body         = "This Gives Higher Multipliers The Longer You Hold, You can also use SPACE to spawn them!",
+		title        = "Hold For Multipliers",
+		body         = "Hold the Red Button! Higher multipliers = More Cash!",
 		target       = "ClickButton", 
 		isMandatory  = true, 
-		holdDuration = 3, 
+		holdDuration = 1.5, 
 		bannerPos    = "Center",
-		nextStep     = "a1_produce",
-		icon = "rbxassetid://14924185885",
+		nextStep     = "a1_mailbox", -- 💥 CHANGED: Skipped the 10-second wait hint.
+		icon         = "rbxassetid://14924185885",
 	},
-	{
-		id           = "a1_produce",
-		area         = 1,
-		trigger      = "chain",
-		title        = "Keep Producing Auras",
-		body         = "Keep Making Auras Until Your Habitat is full!",
-		duration     = 10,
-		isImportant   = true,
-		bannerPos    = "Center",
-		nextStep     = "a1_mailbox",
-		icon = "rbxassetid://14923704777",
-	},
-	
 	{
 		id           = "a1_mailbox",
 		area         = 1,
 		trigger      = "chain",
-		title        = "MailBox",
-		body         = "The MailBox Gives Free Items when you Reach Certain MileStones!",
-		bannerPos    = "Top",
+		title        = "Check The Mail!",
+		body         = "Click the MailBox to claim FREE Rewards!",
 		unlockUI     = "Mailbox",
 		isMandatory  = true, 
-		cameraTarget = "MailboxCamPos", 
-		cameraResetDelay = 3, 
-		icon = "rbxassetid://14921813212",
+		bannerPos    = "Center",
+		icon         = "rbxassetid://14921813212",
+		duration = 10
 	},
 
 	-- CHAIN 2: The Economy Loop
@@ -1248,209 +914,135 @@ TutorialConfig.Steps = {
 		area         = 1,
 		trigger      = "habitatFull",
 		title        = "Your Habitat is Full!",
-		body         = "Your Habitat has a max capacity, you can either Send out a Ship or Upgrade Research For More Capacity",
-		cameraTarget = "HabitatCamPos", 
-		cameraResetDelay = 40, 
-		duration     = 3,
-		nextStep     = "a1_send_ship",
-		icon = "rbxassetid://14922879873",
-		
-	},
-	{
-		id           = "a1_send_ship",
-		area         = 1,
-		trigger      = "chain",
-		title        = "Sending A Ship",
-		body         = "To Send Out A Ship Click The Blue Button",
-		target       = "SendShipBtn",
+		body         = "Your storage is full! Click the Blue Button to send a ship and FREE up SPACE!",
+		target       = "SendShipBtn", 
 		isMandatory  = true, 
 		bannerPos    = "Center",
 		unlockUI     = "SendShipBtn",  
-		nextStep     = "a1_ship_hint",
-		icon = "rbxassetid://14914018910",
-	},
-	{
-		id           = "a1_ship_hint",
-		area         = 1,
-		trigger      = "chain",
-		title        = "First Shipment!",
-		body         = "Sending A Ship Frees Up Space in your Habitat and Pays Out Cash Too!",
-		duration     = 3,
-		nextStep     = "a1_ship_toggle",
-		icon = "rbxassetid://14916846070",
+		nextStep     = "a1_ship_toggle", 
+		icon         = "rbxassetid://14914018910",
 	},
 	{
 		id           = "a1_ship_toggle",
 		area         = 1,
 		trigger      = "chain",
-		title        = "Toggle Between Auto Or Manually Sending A Ship",
-		body         = "You Can Also Toggle Between Auto or Manual mode for sending out ships!",
+		title        = "Automation",
+		body         = "Click here to toggle Auto-Shipping so you don't have to do it manually!",
 		target       = "ToggleShipBtn",
 		isMandatory  = true,
 		bannerPos    = "Center",
 		unlockUI     = "ModeToggle", 
-		nextStep     = "a1_toggle_hint",
-		icon = "rbxassetid://14914018910",
-	},
-	{
-		id           = "a1_toggle_hint",
-		area         = 1,
-		trigger      = "chain",
-		title        = "Auto Or Manual?",
-		body         = "Send Ships when you upgrade your aura value or run OUT of Habitat Space",
-		duration     = 3,
-		nextStep     = "a1_buy_upgrade",
+		nextStep     = "a1_buy_upgrade", 
+		icon         = "rbxassetid://14914018910",
 	},
 	{
 		id           = "a1_buy_upgrade",
 		area         = 1,
 		trigger      = "chain",
 		title        = "Research Shop",
-		body         = "Click On the Shop Button to See Important Upgrades!",
+		body         = "Time to upgrade! Click the Shop Button.",
 		target       = "ShopButton",
 		unlockUI     = "ShopButton",
 		isMandatory  = true,
 		bannerPos    = "Center",
-		nextStep     = "a1_first_upgrade",
-		icon = "rbxassetid://14917128076",
+		nextStep     = "a1_buy_first_upgrade", 
+		icon         = "rbxassetid://14917128076",
 	},
 	{
-		id           = "a1_first_upgrade",
+		id           = "a1_buy_first_upgrade",
 		area         = 1,
 		trigger      = "chain",
-		title        = "Upgrade Tiers",
-		body         = "There are Multiple Tiers in the Shop, Keep Upgrading To Unlock More!",
-		duration     = 3,
-		isImportant   = true,
+		title        = "Buy Your First Upgrade",
+		body         = "Click the green $50 button to increase your Aura Value!",
+		target       = "Buy_blockValue", 
 		bannerPos    = "Top",
-		nextStep     = "a1_hold_upgrade",
-	},
-	{
-		id           = "a1_hold_upgrade",
-		area         = 1,
-		trigger      = "chain",
-		title        = "Hold Upgrades",
-		body         = "You can Hold down Upgrades to Buy Them Very Quickly!",
-		target       = "Card_blockValue", 
-		bannerPos    = "Top",
-		unlockUI     = "ShopCloseBtn",
 		isMandatory  = true, 
-		nextStep     = "a1_gifts_hints",
-		icon = "rbxassetid://14914018910",
+		nextStep     = "a1_close_shop",
+		icon         = "rbxassetid://14914018910",
 	},
 	{
-		id           = "a1_gifts_hints",
+		id           = "a1_close_shop",
 		area         = 1,
 		trigger      = "chain",
 		title        = "Close The Shop",
-		body         = "Click the Red Button",
+		body         = "Click the Red X to close the shop.",
+		unlockUI     = "ShopCloseBtn",
 		isMandatory  = true, 
 		target       = "ShopCloseBtn", 
 		bannerPos    = "Top",
-		nextStep     = "a1_gifts",
+		icon         = "rbxassetid://14915225073",
+		-- Stops here and waits for them to hit 20,000 Eval
 	},
 	
-	{
-		id           = "a1_gifts",
-		area         = 1,
-		trigger      = "chain",
-		title        = "Gifts",
-		body         = "The Aura Produces Gifts and Rewards Randomly! Catch these Auras!",
-		isMandatory  = true, 
-		burstAuras   = 30, 
-		bannerPos    = "Top",
-		cameraTarget = "AuraholderCamPos", 
-		cameraResetDelay = 10, 
-		icon = "rbxassetid://14914511338",
-	},
 	
+
+	-- CHAIN 3: Prestige and Progress
 	{
 		id           = "a1_try_prestige",
 		area         = 1,
 		trigger      = "farmEvalReached",
 		triggerValue = 20000,
 		title        = "Try Prestiging!",
-		body         = "Prestiging Increases Your Earnings Permenantly!",
+		body         = "Click the Prestige button to permanently multiply your earnings!",
 		target       = "PrestigeButton", 
 		isMandatory  = true, 
 		bannerPos    = "Center",
-		requireStep  = "a1_gifts",
 		unlockUI     = {"MainPrestigeBtn", "SoulAuraDisplay"},
-		nextStep     = "a1_try_prestige_hint",
-		icon = "rbxassetid://14923411730",
-	},
-	{
-		id           = "a1_try_prestige_hint",
-		area         = 1,
-		trigger      = "chain",
-		title        = "Prestige Info",
-		body         = "Prestiging Increases Your Earnings Permenantly!",
-		duration     = 1,
 		nextStep     = "a1_prestige_button",
+		icon         = "rbxassetid://14916846070",
 	},
 	{
 		id           = "a1_prestige_button",
 		area         = 1,
 		trigger      = "chain",
-		title        = "Prestige Now?",
-		body         = "Prestige now to get your first permenant earnings increase",
+		title        = "Prestige Now",
+		body         = "Prestige now to get your first permanent earnings increase!",
 		unlockUI     = {"PrestigeBtns", "PrestigeCloseBtn"},
 		isMandatory  = true, 
 		target       = "PrestigeBtns", 
 		bannerPos    = "Top",
-		icon = "rbxassetid://14923411730",
-		nextStep     = "a1_prestige_onearea",
-		
+		icon         = "rbxassetid://14923411730",
+		nextStep     = "a1_close_prestige",
 	},
-	{
-		id           = "a1_prestige_onearea",
-		area         = 1,
-		trigger      = "chain",
-		title        = "Only Once Per Area",
-		body         = "You Can Only Prestige Once Per Area and When Moving to the Next Area!",
-		duration     = 10,
-		nextStep     = "a1_progress", 
-	},
-
 	{
 		id           = "a1_progress",
 		area         = 1,
-		trigger      = "farmEvalReached",
-		triggerValue = 50000,
+		trigger      = "farmEvalReached",        
+		triggerValue = 50000,                    
 		title        = "Next Area Unlocked",
-		body         = "To Progress Through the game click the Next Area Button",
+		body         = "Click the Travel button to move to the next area!",
+		unlockUI     = {"AreaTravelButton", "PortalCloseBtn"},
 		target       = "AreaTravelButton", 
 		isMandatory  = true, 
-		requirePrestige = true,
-		requireStep  = "a1_prestige_onearea",
+		requirePrestige = true,                  
+		requireStep  = "a1_prestige_button",    
 		bannerPos    = "Center",
-		unlockUI     = {"AreaTravelButton", "PortalCloseBtn"},
-		nextStep     = "a1_arrow_button",
+		nextStep     = "a1_arrow_button",        
 		icon         = "rbxassetid://14914000799",
 	},
 	{
 		id           = "a1_arrow_button",
 		area         = 1,
 		trigger      = "chain",
-		title        = "Tons of Areas!",
-		body         = "Use the button to check out what Area is next!",
+		title        = "Select The Area",
+		body         = "Click the arrow to view the Uncommon Area!",
 		target       = "ArrowBtn",
 		isMandatory  = true, 
 		bannerPos    = "Top",
-		unlockUI = 		"ArrowBtn",
+		unlockUI     = "ArrowBtn",
 		nextStep     = "a1_next_area",
-		icon = "rbxassetid://14914018910",
+		icon         = "rbxassetid://14914018910",
 	},
 	{
 		id           = "a1_next_area",
 		area         = 1,
 		trigger      = "chain",
 		title        = "Uncommon Area",
-		body         = "Click On Travel To Area to Progress to the Uncommon Area!",
+		body         = "Click Travel to progress to the Uncommon Area!",
 		target       = "TravelBtn",
-		unlockUI = 		{"NextAreaButton", "PortalCloseBtn"},
+		unlockUI     = {"TravelBtn", "PortalCloseBtn"},
 		isMandatory  = true, 
-		icon = "rbxassetid://14914018910",
+		icon         = "rbxassetid://14914018910",
 	},
 	{
 		id           = "a1_stuck_prestige",
@@ -1470,121 +1062,101 @@ TutorialConfig.Steps = {
 	--	trigger      = "areaEnter",
 	--	title        = "How To Boost",
 	--	body         = "Click On The Boost Button",
-	--	target       = "BoostBtn", 
+	--	target       = "BoostsButton", 
 	--	isMandatory  = true, 
 	--	bannerPos    = "Center",
 	--	unlockUI = 		"BoostsButton",
-	--	nextStep     = "a2_boost",
+	--	nextStep     = "a2_click_boost",
 	--	icon = "rbxassetid://14914018910",
 	--},
 
-	---- AREA 2 EVENTS
 	--{
-	--	id           = "a2_mission_intro",
+	--	id           = "a2_click_boost",
 	--	area         = 2,
-	--	trigger      = "areaEnter",
+	--	trigger      = "chain",
 	--	delay        = 10,
-	--	title        = "Placeholder Title 18",
-	--	body         = "Placeholder text for step 18.",
-	--},
-	--{
-	--	id           = "a2_boosts",
-	--	area         = 2,
-	--	trigger      = "goldenAurasReached",
-	--	triggerValue = 100,
-	--	title        = "Placeholder Title 19",
-	--	body         = "Placeholder text for step 19.",
-	--	target       = "BoostsButton",
-	--},
-	--{
-	--	id           = "a2_golden_portal",
-	--	area         = 2,
-	--	trigger      = "farmEvalReached",
-	--	triggerValue = 600000,
-	--	title        = "Placeholder Title 20",
-	--	body         = "Placeholder text for step 20.",
+	--	title        = "Buy A Spawn Speed Boost",
+	--	body         = "Use your GOLDEN AURAS to BUY this BOOST",
+	--	isMandatory  = true, 
+	--	target       = "BoostsButton", 
+	--	unlockUI = 		"BoostsButton",
+	--	icon = "rbxassetid://14914018910",
+
 	--},
 
 
 	-- ══════════ AREA 3: RARE ══════════
-	-- CHAIN 4: Golden Bank & Epic Research
-	{
-		id           = "a3_golden_auras",
-		area         = 3,
-		trigger      = "areaEnter",
-		title        = "Placeholder Title 21",
-		body         = "Placeholder text for step 21.",
-		nextStep     = "a3_golden_aura_bank",
-	},
-	{
-		id           = "a3_golden_aura_bank",
-		area         = 3,
-		trigger      = "chain",
-		title        = "Placeholder Title 22",
-		body         = "Placeholder text for step 22.",
-		cameraTarget = "GoldenBankModel", -- Replace with actual model name
-		nextStep     = "a3_golden_aura_break",
-	},
-	{
-		id           = "a3_golden_aura_break",
-		area         = 3,
-		trigger      = "chain",
-		title        = "Placeholder Title 23",
-		body         = "Placeholder text for step 23.",
-		cameraTarget = "GoldenBankModel",
-		nextStep     = "a3_epic_research",
-	},
-	{
-		id           = "a3_epic_research",
-		area         = 3,
-		trigger      = "chain",
-		title        = "Placeholder Title 24",
-		body         = "Placeholder text for step 24.",
-	},
+	-- CHAIN 4: Golden Bank 
+	--{
+	--	id           = "a3_golden_auras",
+	--	area         = 3,
+	--	trigger      = "areaEnter",
+	--	title        = "Placeholder Title 21",
+	--	body         = "Placeholder text for step 21.",
+	--	nextStep     = "a3_golden_aura_bank",
+	--},
+	--{
+	--	id           = "a3_golden_aura_bank",
+	--	area         = 3,
+	--	trigger      = "chain",
+	--	title        = "Placeholder Title 22",
+	--	body         = "Placeholder text for step 22.",
+	--	cameraTarget = "GoldenBankModel", -- Replace with actual model name
+	--	nextStep     = "a3_golden_aura_break",
+	--},
+	--{
+	--	id           = "a3_golden_aura_break",
+	--	area         = 3,
+	--	trigger      = "chain",
+	--	title        = "Placeholder Title 23",
+	--	body         = "Placeholder text for step 23.",
+	--	cameraTarget = "GoldenBankModel",
+	--	nextStep     = "a3_epic_research",
+	--},
 
 
 	-- ══════════ AREA 4: EPIC ══════════
-	-- AREA 4 EVENTS
-	{
-		id           = "a4_welcome",
-		area         = 4,
-		trigger      = "areaEnter",
-		title        = "Placeholder Title 25",
-		body         = "Placeholder text for step 25.",
-	},
-	{
-		id           = "a4_boost_hint",
-		area         = 4,
-		trigger      = "currencyReached",
-		triggerValue = 5000,
-		title        = "Placeholder Title 26",
-		body         = "Placeholder text for step 26.",
-	},
-	{
-		id           = "a4_combo_boost",
-		area         = 4,
-		trigger      = "boostActivated",
-		title        = "Placeholder Title 27",
-		body         = "Placeholder text for step 27.",
-	},
+	-- AREA 4 EVENTS EPIC RESEARCH HERE
+	--{
+	--	id           = "a4_welcome",
+	--	area         = 4,
+	--	trigger      = "areaEnter",
+	--	title        = "Placeholder Title 25",
+	--	body         = "Placeholder text for step 25.",
+	--},
+	--{
+	--	id           = "a4_boost_hint",
+	--	area         = 4,
+	--	trigger      = "currencyReached",
+	--	triggerValue = 5000,
+	--	title        = "Placeholder Title 26",
+	--	body         = "Placeholder text for step 26.",
+	--},
+	--{
+	--	id           = "a4_combo_boost",
+	--	area         = 4,
+	--	trigger      = "boostActivated",
+	--	title        = "Placeholder Title 27",
+	--	body         = "Placeholder text for step 27.",
+	--},
 
 
 	-- ══════════ AREA 5: LEGENDARY ══════════
-	-- AREA 5 EVENTS
-	{
-		id           = "a5_welcome",
-		area         = 5,
-		trigger      = "areaEnter",
-		title        = "Placeholder Title 28",
-		body         = "Placeholder text for step 28.",
-	},
-	{
-		id           = "a5_graduation",
-		area         = 5,
-		trigger      = "portalReady",
-		title        = "Placeholder Title 29",
-		body         = "Placeholder text for step 29.",
-	},
+--	-- AREA 5 EVENTS
+--	{
+--		id           = "a5_welcome",
+--		area         = 5,
+--		trigger      = "areaEnter",
+--		title        = "Placeholder Title 28",
+--		body         = "Placeholder text for step 28.",
+--	},
+--	{
+--		id           = "a5_graduation",
+--		area         = 5,
+--		trigger      = "portalReady",
+--		title        = "Placeholder Title 29",
+--		body         = "Placeholder text for step 29.",
+--	},
 }
 
 ---------------------------------------------------------------
@@ -1606,7 +1178,6 @@ function TutorialConfig.GetStep(id)
 end
 
 return TutorialConfig
-
 UIConfig:
 -- UIConfig
 -- Location: ReplicatedStorage > Modules > UIConfig
@@ -2368,3 +1939,63 @@ local WeatherConfig = {
 }
 
 return WeatherConfig
+
+-- AchievementConfig
+-- Location: ReplicatedStorage > Modules > AchievementConfig
+
+local AchievementConfig = {}
+
+-- 🏆 YOUR CHALLENGES / BOOST UNLOCKS
+AchievementConfig.Challenges = {
+	{
+		id = "unlock_aurarush",
+		boostId = "AuraRush",
+		title = "Aura Tycoon",
+		desc = "Spawn 1,000 Auras",
+		iconId = "rbxassetid://14916846070", -- PLACEHOLDER
+		statKey = "totalCubesProduced", -- The exact variable in your datastore
+		goal = 10,
+		rewardText = "Unlocks: Aura Rush Boost"
+	},
+	{
+		id = "unlock_spawnboost",
+		boostId = "SpawnBoost",
+		title = "Explorer",
+		desc = "Reach Area 2",
+		iconId = "rbxassetid://14916846070", -- PLACEHOLDER
+		statKey = "currentArea",
+		goal = 2,
+		rewardText = "Unlocks: Value Boost"
+	},
+	{
+		id = "unlock_soulboost",
+		boostId = "SoulBoost",
+		title = "Soul Searcher",
+		desc = "Prestige 5 Times",
+		iconId = "rbxassetid://14916846070", -- PLACEHOLDER
+		statKey = "prestigeCount",
+		goal = 5,
+		rewardText = "Unlocks: Soul Boost"
+	}
+}
+
+-- 🏅 YOUR ROBLOX BADGES
+AchievementConfig.Badges = {
+	{ id = 000000000, title = "First Prestige", desc = "Prestige for the first time.", iconId = "rbxassetid://14916846070" }, 
+	{ id = 000000000, title = "Millionaire", desc = "Hold $1,000,000 at once.", iconId = "rbxassetid://14916846070" }, 
+}
+
+-- Helper function to check if a boost is unlocked
+function AchievementConfig.IsBoostUnlocked(boostId, playerData)
+	for _, challenge in ipairs(AchievementConfig.Challenges) do
+		if challenge.boostId == boostId then
+			local currentAmount = playerData[challenge.statKey] or 0
+			if currentAmount < challenge.goal then
+				return false, challenge.desc -- Returns false and tells you why!
+			end
+		end
+	end
+	return true, ""
+end
+
+return AchievementConfig
