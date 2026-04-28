@@ -5503,7 +5503,24 @@ local function UnlockProgressiveUI(targetName, showEffect)
 			local targetSize = desc:GetAttribute("OriginalSize") or desc.Size 
 			if showEffect then
 				desc.Size = UDim2.new(0,0,0,0)
-				TweenService:Create(desc, TweenInfo.new(0.5, Enum.EasingStyle.Bounce), {Size = targetSize}):Play()
+
+				-- ✨ THE SPEED & CLICK SHIELD FIX ✨
+				-- 1. Find the actual button to temporarily disable
+				local buttonToLock = desc:IsA("GuiButton") and desc or desc:FindFirstChildWhichIsA("GuiButton", true)
+				if buttonToLock then 
+					buttonToLock.Interactable = false 
+				end
+
+				-- 2. Lightning-fast 0.15s snappy tween instead of the slow 0.5s bounce
+				local popupTween = TweenService:Create(desc, TweenInfo.new(0.02, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = targetSize})
+				popupTween:Play()
+
+				-- 3. Re-enable the button the exact millisecond the animation finishes
+				popupTween.Completed:Connect(function()
+					if buttonToLock then 
+						buttonToLock.Interactable = true 
+					end
+				end)
 			end
 		end
 	end
@@ -5523,11 +5540,6 @@ local function UnlockProgressiveUI(targetName, showEffect)
 					desc.CanCollide = origCollide ~= nil and origCollide or true
 				end
 			end
-		end
-
-		-- Optional pop-in effect
-		if showEffect and wsTarget:IsA("Model") and wsTarget.PrimaryPart then
-			-- (Particle effects can go here later)
 		end
 
 		hidden3DObjects[targetName] = nil 
@@ -5767,7 +5779,7 @@ local function ShowVisualPointer(targetName, dismissCallback, holdDuration)
 				end
 
 				if isVisible and desc.AbsoluteSize.Y > 0 then
-					-- ? THE FIX: Prioritize a button named "BuyButton" so we don't accidentally target the info icon!
+					-- ✨ THE FIX: Prioritize a button named "BuyButton" so we don't accidentally target the info icon!
 					clickTarget = desc:IsA("GuiButton") and desc or (desc:FindFirstChild("BuyButton", true) or desc:FindFirstChildWhichIsA("GuiButton", true))
 					if clickTarget then target = desc; break end
 				end
@@ -6046,7 +6058,7 @@ ShowBanner = function(step)
 			camera.CameraType = Enum.CameraType.Scriptable
 			TweenService:Create(camera, TweenInfo.new(1.5, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {CFrame = posPart.CFrame}):Play()
 
-			-- ? THE AUTO-RESET FIX
+			-- ✨ THE AUTO-RESET FIX
 			if step.cameraResetDelay and step.cameraResetDelay > 0 then
 				task.delay(step.cameraResetDelay, function()
 					-- Ensure we are still looking at THIS specific target
@@ -6211,8 +6223,8 @@ local function FireTrigger(triggerName, value)
 				continue
 			end
 
-			-- Prestige Lock
-			if step.requirePrestige and not IsStepComplete("a1_first_prestige") then
+			-- Prestige Lock (FIXED: Now checks actual stats instead of a hardcoded step name)
+			if step.requirePrestige and livePrestigeCount <= 0 and not hasPrestieged then
 				continue
 			end
 
@@ -6343,6 +6355,11 @@ UpdateHUD.OnClientEvent:Connect(function(stats)
 	end
 	if stats.tutorialComplete ~= nil then tutorialComplete = stats.tutorialComplete end
 	if stats.currentArea then currentArea = stats.currentArea end
+
+	-- ✨ FIX THESE TWO LINES: Map to the correct local variables!
+	if stats.hasPrestigedThisArea ~= nil then hasPrestieged = stats.hasPrestigedThisArea end
+	if stats.prestigeCount ~= nil then livePrestigeCount = stats.prestigeCount end
+
 	if stats.currency ~= nil then
 		local old = liveCurrency; liveCurrency = stats.currency
 		if liveCurrency > old then FireTrigger("currencyReached", liveCurrency) end
