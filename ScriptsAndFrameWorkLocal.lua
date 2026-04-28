@@ -142,7 +142,7 @@ local function SwapAuraHolder(areaIndex, instant)
 	local yOffset   = AreaRegistry.GetYOffset(areaIndex)
 	local yRotation = AreaRegistry.GetYRotation(areaIndex)
 
-	--print("[AreaTransition] Swapping aura ? Area" .. areaIndex
+	--print("[AreaTransition] Swapping aura → Area" .. areaIndex
 	--	.. " (yOffset=" .. yOffset .. ", yRotation=" .. yRotation .. "°)"
 	--	.. (instant and " [instant]" or " [tween]"))
 
@@ -208,42 +208,77 @@ local function ApplyMapColors(areaData, instant)
 	end
 end
 
----------------------------------------------------------------
--- LIGHTING
----------------------------------------------------------------
-local function ApplyLighting(areaData, instant)
+local function ApplyLighting(areaIndex, instant)
+	local preset = AreaRegistry.GetLighting(areaIndex)
+
+	-- 1. Tween standard Lighting properties
 	local props = {}
-	if areaData.ambientColor      then props.Ambient           = areaData.ambientColor      end
-	if areaData.outdoorAmbient    then props.OutdoorAmbient    = areaData.outdoorAmbient    end
-	if areaData.fogColor          then props.FogColor          = areaData.fogColor          end
-	if areaData.fogEnd            then props.FogEnd            = areaData.fogEnd            end
-	if areaData.fogStart          then props.FogStart          = areaData.fogStart          end
-	if areaData.brightness        then props.Brightness        = areaData.brightness        end
-	if areaData.colorShift_Top    then props.ColorShift_Top    = areaData.colorShift_Top    end
-	if areaData.colorShift_Bottom then props.ColorShift_Bottom = areaData.colorShift_Bottom end
+	if preset.ClockTime then props.ClockTime = preset.ClockTime end
+	if preset.Brightness then props.Brightness = preset.Brightness end
+	if preset.FogEnd then props.FogEnd = preset.FogEnd end
+	if preset.FogStart then props.FogStart = preset.FogStart end
+	if preset.Ambient then props.Ambient = preset.Ambient end
+	if preset.FogColor then props.FogColor = preset.FogColor end 
+
 	if instant then
 		for prop, val in pairs(props) do pcall(function() Lighting[prop] = val end) end
 	elseif next(props) then
-		SafeTween(Lighting,
-			TweenInfo.new(TWEEN_DURATION, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut),
-			props)
+		SafeTween(Lighting, TweenInfo.new(TWEEN_DURATION, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut), props)
+	end
+
+	-- ✨ 2. Tween Atmosphere properties (The Smog Maker!)
+	-- ✨ 2. Tween Atmosphere properties
+	local atmosphere = Lighting:FindFirstChildOfClass("Atmosphere")
+	if atmosphere then
+		local atmoProps = {}
+		if preset.Density then atmoProps.Density = preset.Density end
+		if preset.Haze then atmoProps.Haze = preset.Haze end
+		if preset.AtmosphereColor then atmoProps.Color = preset.AtmosphereColor end
+
+		if instant then
+			for prop, val in pairs(atmoProps) do pcall(function() atmosphere[prop] = val end) end
+		elseif next(atmoProps) then
+			SafeTween(atmosphere, TweenInfo.new(TWEEN_DURATION, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut), atmoProps)
+		end
+	end
+
+	-- ✨ 3. Tween SunRays properties (NEW!)
+	local sunRays = Lighting:FindFirstChildOfClass("SunRaysEffect")
+	if sunRays then
+		local rayProps = {}
+
+		-- Use the preset intensity, or default back to 0.25 if the preset forgot to mention it
+		if preset.SunRaysIntensity ~= nil then 
+			rayProps.Intensity = preset.SunRaysIntensity 
+		else
+			rayProps.Intensity = 0.25
+		end
+
+		if instant then
+			for prop, val in pairs(rayProps) do pcall(function() sunRays[prop] = val end) end
+		elseif next(rayProps) then
+			SafeTween(sunRays, TweenInfo.new(TWEEN_DURATION, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut), rayProps)
+		end
 	end
 end
 
 ---------------------------------------------------------------
--- SKYBOX
+-- SKYBOX (Updated to use Presets)
 ---------------------------------------------------------------
-local function ApplySkybox(areaData, instant)
+local function ApplySkybox(areaIndex, instant)
+	local preset = AreaRegistry.GetLighting(areaIndex)
 	local sky = Lighting:FindFirstChildOfClass("Sky")
 	if not sky then return end
+
 	local function DoSwap()
-		if areaData.skyboxBk ~= "" then pcall(function() sky.SkyboxBk = areaData.skyboxBk end) end
-		if areaData.skyboxDn ~= "" then pcall(function() sky.SkyboxDn = areaData.skyboxDn end) end
-		if areaData.skyboxFt ~= "" then pcall(function() sky.SkyboxFt = areaData.skyboxFt end) end
-		if areaData.skyboxLf ~= "" then pcall(function() sky.SkyboxLf = areaData.skyboxLf end) end
-		if areaData.skyboxRt ~= "" then pcall(function() sky.SkyboxRt = areaData.skyboxRt end) end
-		if areaData.skyboxUp ~= "" then pcall(function() sky.SkyboxUp = areaData.skyboxUp end) end
+		if preset.skyboxBk and preset.skyboxBk ~= "" then pcall(function() sky.SkyboxBk = preset.skyboxBk end) end
+		if preset.skyboxDn and preset.skyboxDn ~= "" then pcall(function() sky.SkyboxDn = preset.skyboxDn end) end
+		if preset.skyboxFt and preset.skyboxFt ~= "" then pcall(function() sky.SkyboxFt = preset.skyboxFt end) end
+		if preset.skyboxLf and preset.skyboxLf ~= "" then pcall(function() sky.SkyboxLf = preset.skyboxLf end) end
+		if preset.skyboxRt and preset.skyboxRt ~= "" then pcall(function() sky.SkyboxRt = preset.skyboxRt end) end
+		if preset.skyboxUp and preset.skyboxUp ~= "" then pcall(function() sky.SkyboxUp = preset.skyboxUp end) end
 	end
+
 	if instant then DoSwap()
 	else task.delay(TWEEN_DURATION * 0.5, DoSwap) end
 end
@@ -285,19 +320,54 @@ local function FadeDecorations(alpha, duration)
 	if #tweens > 0 then tweens[1].Completed:Wait() end
 end
 
+---------------------------------------------------------------
+-- DECORATIONS (With Memory Transparency Fix)
+---------------------------------------------------------------
 local function SwapDecorations(areaIndex)
 	local folder = AreaAssets:FindFirstChild("Area" .. areaIndex)
 	local newDec = folder and folder:FindFirstChild("Decorations")
-	if newDec and #newDec:GetChildren() == 0 then newDec = nil end
-	FadeDecorations(1, FADE_DURATION)
-	for _, child in ipairs(DECORATION_CONTAINER:GetChildren()) do child:Destroy() end
+
+	-- 1. Fade OUT old decorations
+	for _, child in ipairs(DECORATION_CONTAINER:GetChildren()) do
+		for _, desc in ipairs(child:GetDescendants()) do
+			if desc:IsA("BasePart") or desc:IsA("Decal") or desc:IsA("Texture") then
+				SafeTween(desc, TweenInfo.new(TWEEN_DURATION * 0.5), {Transparency = 1})
+			end
+		end
+	end
+
+	task.wait(TWEEN_DURATION * 0.5)
+
+	-- Destroy the old ones once they are invisible
+	for _, child in ipairs(DECORATION_CONTAINER:GetChildren()) do 
+		child:Destroy() 
+	end
+
+	-- 2. Fade IN new decorations
 	if newDec then
 		for _, obj in ipairs(newDec:GetChildren()) do
 			local clone = obj:Clone()
-			SetTransparency(clone, 1)
+
+			-- ✨ THE FIX: Save the original transparency before making it invisible!
+			for _, desc in ipairs(clone:GetDescendants()) do
+				if desc:IsA("BasePart") or desc:IsA("Decal") or desc:IsA("Texture") then
+					-- Memorize its true transparency as an Attribute
+					desc:SetAttribute("OrigTrans", desc.Transparency)
+					-- Now hide it for the fade-in
+					desc.Transparency = 1
+				end
+			end
+
 			clone.Parent = DECORATION_CONTAINER
+
+			-- ✨ THE FIX: Tween back to the saved value instead of 0!
+			for _, desc in ipairs(clone:GetDescendants()) do
+				if desc:IsA("BasePart") or desc:IsA("Decal") or desc:IsA("Texture") then
+					local targetTrans = desc:GetAttribute("OrigTrans") or 0
+					SafeTween(desc, TweenInfo.new(TWEEN_DURATION * 0.5), {Transparency = targetTrans})
+				end
+			end
 		end
-		FadeDecorations(0, FADE_DURATION)
 	end
 end
 
@@ -305,15 +375,16 @@ end
 -- MASTER
 ---------------------------------------------------------------
 local function ApplyAreaConfig(areaIndex, instant)
-	--print("[AreaTransition] Applying area", areaIndex, instant and "(instant)" or "(tween)")
 	local areaData = AreaRegistry.Get(areaIndex)
 	SwapAuraHolder(areaIndex, instant)
+
 	if areaData then
 		ApplyMapColors(areaData, instant)
-		ApplyLighting(areaData, instant)
-		ApplySkybox(areaData, instant)
+		ApplyLighting(areaIndex, instant) -- ✨ FIX: Passing areaIndex
+		ApplySkybox(areaIndex, instant)   -- ✨ FIX: Passing areaIndex
 		ApplyAuraHolderTint(areaData, instant)
 	end
+
 	if instant then
 		local folder = AreaAssets:FindFirstChild("Area" .. areaIndex)
 		local newDec = folder and folder:FindFirstChild("Decorations")
@@ -342,43 +413,15 @@ local appliedOnJoin = false
 AreaUpdated.OnClientEvent:Connect(function(info)
 	if not appliedOnJoin then
 		appliedOnJoin = true
-		print("[AreaTransition] Join ? area", info.currentArea or 1)
+		print("[AreaTransition] Join → area", info.currentArea or 1)
 		ApplyAreaConfig(info.currentArea or 1, true)
 	end
 end)
 
 AreaChanged.OnClientEvent:Connect(function(info)
-	print("[AreaTransition] AreaChanged ?", info.newArea, "(" .. (info.travelType or "?") .. ")")
+	print("[AreaTransition] AreaChanged →", info.newArea, "(" .. (info.travelType or "?") .. ")")
 	ApplyAreaConfig(info.newArea or 1, false)
 end)
-
-AuraHologramBridge:
--- AuraHologramBridge (LocalScript)
-local CollectionService = game:GetService("CollectionService")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Hologram = require(ReplicatedStorage.Modules:WaitForChild("HologramModule"))
-
-local function ApplyHologram(prompt)
-	-- Determine color based on rarity attribute
-	local isElite = prompt:GetAttribute("IsElite")
-	local holoColor = isElite and Color3.fromRGB(255, 50, 255) or Color3.fromRGB(50, 255, 255)
-
-	-- Create the cool hologram beam
-	local auraHolo = Hologram.New(prompt, Vector3.new(0, 3, 0), false, true)
-	auraHolo:SetBillboardActive(true)
-	auraHolo:SetAlwaysOnTop(true)
-	auraHolo:SetPrimaryColour(holoColor)
-	auraHolo:SetTertiaryColour(Color3.fromRGB(255, 255, 255))
-end
-
--- 1. Catch new auras that spawn while playing
-CollectionService:GetInstanceAddedSignal("AuraHologram"):Connect(ApplyHologram)
-
--- 2. Catch any auras that were already on the ground when you joined
-for _, prompt in ipairs(CollectionService:GetTagged("AuraHologram")) do
-	ApplyHologram(prompt)
-end
-
 BoostController:
 -- BoostController
 -- Location: StarterPlayer > StarterPlayerScripts > BoostController
@@ -815,6 +858,7 @@ local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local Debris = game:GetService("Debris")
 local AdminConfig = require(ReplicatedStorage.Modules.AdminConfig)
+local UITheme = require(game:GetService("ReplicatedStorage").Modules.UITheme)
 
 local ProduceAura = ReplicatedStorage.RemoteEvents:WaitForChild("ProduceAura")
 local AuraSpawned = ReplicatedStorage.RemoteEvents:WaitForChild("AuraSpawned")
@@ -825,7 +869,6 @@ local CubeMutated = ReplicatedStorage.RemoteEvents:WaitForChild("CubeMutated")
 local UpdateMultiplier = ReplicatedStorage:WaitForChild("UpdateMultiplier")
 local HabitatFullEvent = ReplicatedStorage:WaitForChild("HabitatFullEvent")
 local CubeMutatedBatch = ReplicatedStorage.RemoteEvents:WaitForChild("CubeMutatedBatch")
-
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 local holding = false
@@ -1077,18 +1120,41 @@ local function GetCurrentMultiplier()
 	return smoothMult, currentTier
 end
 
+-- ✨ PASTE THIS NEW FUNCTION RIGHT HERE
+local function PlayMilestoneSound(soundValue)
+	if not soundValue or soundValue == "" then return end
+	local sfxToPlay = nil
+
+	if string.find(soundValue, "rbxassetid://") then
+		sfxToPlay = Instance.new("Sound")
+		sfxToPlay.SoundId = soundValue
+		sfxToPlay.Volume = 0.6
+	else
+		local sfxFolder = ReplicatedStorage:FindFirstChild("SFX") or ReplicatedStorage:FindFirstChild("Sounds")
+		if sfxFolder then
+			local foundSound = sfxFolder:FindFirstChild(soundValue)
+			if foundSound then
+				sfxToPlay = foundSound:Clone()
+				sfxToPlay.Volume = 0.6
+			else
+				warn("⚠️ Could not find sound named '" .. soundValue .. "' in ReplicatedStorage.SFX!")
+			end
+		end
+	end
+
+	if sfxToPlay then
+		sfxToPlay.Parent = game:GetService("SoundService")
+		sfxToPlay:Play()
+		local duration = sfxToPlay.TimeLength > 0 and sfxToPlay.TimeLength or 3
+		Debris:AddItem(sfxToPlay, duration)
+	end
+end
+
 local function SpawnMilestonePopup(multFloor)
 	local data = MilestoneData[multFloor]
 	if not data then return end 
 
-	if data.sound then
-		local sfx = Instance.new("Sound")
-		sfx.SoundId = data.sound
-		sfx.Volume = 0.6
-		sfx.Parent = game:GetService("SoundService")
-		sfx:Play()
-		game.Debris:AddItem(sfx, 2)
-	end
+	PlayMilestoneSound(data.sound)
 
 	local pop = Instance.new("TextLabel")
 	pop.Text = data.name .. " (" .. string.format("%.1f", data.mult) .. "x)"
@@ -1417,10 +1483,30 @@ UpdateHUDEvent.OnClientEvent:Connect(function(stats)
 
 	-- ✨ THE FIX: Constantly check upgrades so the client never forgets!
 	if stats.upgrades then
-		-- Sync the Mythic Unlock
-		local mythicData = stats.upgrades["unlockMythicMult"]
-		local mythicLevel = (typeof(mythicData) == "table" and mythicData.level) or (typeof(mythicData) == "number" and mythicData) or 0
-		playerMaxTier = (mythicLevel > 0) and 6 or 5
+		-- ✨ THE SCALABLE TIER UNLOCK SYSTEM (Now syncing correctly on HUD update!)
+		local tierUnlocks = {
+			{ upgradeId = "unlockOmniMult",      tier = 10 },
+			{ upgradeId = "unlockUniversalMult", tier = 9 },
+			{ upgradeId = "unlockGodlyMult",     tier = 8 },
+			{ upgradeId = "unlockCosmicMult",    tier = 7 },
+			{ upgradeId = "unlockMythicMult",    tier = 6 },
+		}
+
+		local calculatedMaxTier = 5 -- Default max tier (Legendary) if they bought nothing
+
+		-- Check upgrades from top to bottom
+		for _, data in ipairs(tierUnlocks) do
+			local upgData = stats.upgrades[data.upgradeId]
+			local level = (typeof(upgData) == "table" and upgData.level) or (typeof(upgData) == "number" and upgData) or 0
+
+			if level > 0 then
+				calculatedMaxTier = data.tier
+				break -- We found their highest unlock, so stop checking!
+			end
+		end
+
+		-- Apply the properly calculated cap
+		playerMaxTier = calculatedMaxTier
 
 		-- Sync the Speed Multiplier
 		local speedData = stats.upgrades["multiplierSpeed"]
@@ -1574,15 +1660,36 @@ AddBasicJuice(playerGui:WaitForChild("MainHUD"):FindFirstChild("SendButton"))
 ReplicatedStorage.RemoteEvents.UpgradeUpdated.OnClientEvent:Connect(function(info)
 	if not info or not info.upgrades then return end
 
+	-- 1. Setup Speed
 	local speedData = info.upgrades["multiplierSpeed"]
 	local speedLevel = (typeof(speedData) == "table" and speedData.level) or (typeof(speedData) == "number" and speedData) or 0
 	playerMultSpeed = 1.0 + (speedLevel * 0.05) 
 
-	local mythicData = info.upgrades["unlockMythicMult"]
-	local mythicLevel = (typeof(mythicData) == "table" and mythicData.level) or (typeof(mythicData) == "number" and mythicData) or 0
+	-- ✨ 2. THE NEW SCALABLE TIER UNLOCK SYSTEM
+	-- List your highest upgrades at the top, down to the lowest.
+	local tierUnlocks = {
+		{ upgradeId = "unlockOmniMult",      tier = 10 },
+		{ upgradeId = "unlockUniversalMult", tier = 9 },
+		{ upgradeId = "unlockGodlyMult",     tier = 8 },
+		{ upgradeId = "unlockCosmicMult",    tier = 7 },
+		{ upgradeId = "unlockMythicMult",    tier = 6 },
+	}
 
-	-- ✨ If they bought the unlock, change the cap to 6 (Mythic)
-	playerMaxTier = (mythicLevel > 0) and 6 or 5
+	local calculatedMaxTier = 5 -- Default max tier (Legendary) if they bought nothing
+
+	-- Check upgrades from top to bottom. The first one they own becomes their max tier!
+	for _, data in ipairs(tierUnlocks) do
+		local upgData = info.upgrades[data.upgradeId]
+		local level = (typeof(upgData) == "table" and upgData.level) or (typeof(upgData) == "number" and upgData) or 0
+
+		if level > 0 then
+			calculatedMaxTier = data.tier
+			break -- We found their highest unlock, so stop checking!
+		end
+	end
+
+	-- Apply the newly calculated cap
+	playerMaxTier = calculatedMaxTier
 end)
 
 ForgeInit:
@@ -3314,7 +3421,7 @@ local function GetButtonText()
 end
 
 ---------------------------------------------------------------
--- Soul Aura display ? FIX: BIGGER TEXT
+-- Soul Aura display � FIX: BIGGER TEXT
 ---------------------------------------------------------------
 local SA_DISPLAY_W = 220   -- was 160
 local SA_DISPLAY_H = 90    -- was 70
@@ -3582,7 +3689,7 @@ RunService.RenderStepped:Connect(function(dt)
 end)
 
 ---------------------------------------------------------------
--- UpdateHUD ? FIX: always reads hasPrestigedThisArea from server
+-- UpdateHUD � FIX: always reads hasPrestigedThisArea from server
 ---------------------------------------------------------------
 local UpdateHUD=ReplicatedStorage.RemoteEvents:WaitForChild("UpdateHUD")
 UpdateHUD.OnClientEvent:Connect(function(stats)
@@ -3624,13 +3731,32 @@ end)
 PrestigeComplete.OnClientEvent:Connect(function(info)
 	if info.blocked then
 		TweenService:Create(PrestigeButton,TweenInfo.new(0.1),{BackgroundColor3=Color3.fromRGB(180,60,60)}):Play()
-		task.delay(0.2, function()
-			TweenService:Create(PrestigeButton,TweenInfo.new(0.2),{BackgroundColor3=PRESTIGE_COLOR_USED}):Play()
-		end)
+		task.delay(0.2, function() TweenService:Create(PrestigeButton,TweenInfo.new(0.2),{BackgroundColor3=PRESTIGE_COLOR_USED}):Play() end)
 		PrestigeButton.Text="Used"; hasPrestigedThisArea=true; return
 	end
 	if info.hasPrestigedThisArea~=nil then hasPrestigedThisArea=info.hasPrestigedThisArea end
-	for _,obj in ipairs(workspace:GetChildren()) do if obj:GetAttribute("AuraCube") then obj:Destroy() end end
+
+	for _,obj in ipairs(workspace:GetChildren()) do
+		if obj:GetAttribute("AuraCube") then obj:Destroy() end
+	end
+
+	-- ✨ NEW BURST MATH LOGIC ✨
+	local burstAmount = 0
+	if info.newSoulAuras and info.newSoulAuras > 0 then
+		-- The Custom Curve: 44->4, 440->12, 1500->20, 10000->43
+		burstAmount = math.floor(math.pow(info.newSoulAuras, 0.4) * 1.1)
+	elseif info.isPortalEntry then
+		-- Flat amount if traveling to a new area with 0 soul auras (Early Game)
+		burstAmount = 15 -- Change this flat number to whatever you want!
+	end
+
+	if burstAmount > 0 then
+		burstAmount = math.clamp(burstAmount, 1, 50) -- Hard cap at 50 for safety
+		local burstEvent = ReplicatedStorage.RemoteEvents:FindFirstChild("TutorialBurst")
+		if burstEvent then burstEvent:FireServer(burstAmount) end
+	end
+	-- ✨ END BURST LOGIC ✨
+
 	displayedTotalEarned=0; serverTotalEarned=0; displayedRunSA=0
 	ratePerSecond=0; barHighWaterMark=0; previewPending=false
 	serverSoulAuras=info.totalSoulAuras
@@ -3645,7 +3771,7 @@ PrestigeComplete.OnClientEvent:Connect(function(info)
 end)
 
 ---------------------------------------------------------------
--- AreaChanged ? FIX: always reset prestige state
+-- AreaChanged � FIX: always reset prestige state
 ---------------------------------------------------------------
 AreaChanged.OnClientEvent:Connect(function(info)
 	hasPrestigedThisArea=info.hasPrestigedThisArea or false
@@ -3742,15 +3868,13 @@ local function AddButtonJuice(btn)
 	end)
 end
 
--- ? Apply the juice to your Area Browser buttons!
+-- ✨ Apply the juice to your Area Browser buttons!
 AddButtonJuice(PrestigeButton)
 AddButtonJuice(ConfirmBtn)
 AddButtonJuice(DialogCloseBtn)
 
 local function RefreshLook()
 	UITheme.Apply(PrestigeButton, "Panel")
-	UITheme.Apply(Dialog, "Panel") -- 'Panel' usually looks best for big floating boxes
-	UITheme.Apply(DialogHeader, "Panel") -- 'Panel' usually looks best for big floating boxes
 	UITheme.Apply(ConfirmBtn, "Panel") -- 'Panel' usually looks best for big floating boxes
 	UITheme.ApplyShine(Dialog)
 
