@@ -697,6 +697,8 @@ local function SendHUDUpdate(player)
 		goldenAuras=data.goldenAuras or 0, boostInventory=data.boostInventory or {},
 		prestigeCount=data.prestigeCount or 0,
 		upgrades=data.upgrades or {},
+		totalCubesProduced = data.totalCubesProduced or 0,
+		currentArea        = data.currentArea or 1,
 	})
 end
 
