@@ -1,329 +1,3 @@
--- TutorialConfig
--- Location: ReplicatedStorage > Modules > TutorialConfig
-
-local TutorialConfig = {}
-
-TutorialConfig.TutorialEndArea = 5
-
-TutorialConfig.DefaultDuration = 4
-TutorialConfig.DefaultDelay    = 0
-TutorialConfig.DefaultColor    = Color3.fromRGB(255, 255, 255)
-TutorialConfig.DefaultIcon     = "rbxassetid://14914018910"
-
-TutorialConfig.Steps = {
-
-	-- ══════════ AREA 1: COMMON ══════════
-	-- CHAIN 1: The Spawning Loop
-	{
-		id           = "a1_hello",
-		area         = 1,
-		trigger      = "areaEnter",
-		title        = "Welcome to Aura Inc!",
-		body         = "Spam Click the Red Button to Produce Auras!",
-		target       = "ClickButton", 
-		isMandatory  = true, 
-		bannerPos    = "Center",
-		unlockUI     = {"ClickButton", "HatcheryBar", "CurrencyLabel", "RateLabel"},
-		nextStep     = "a1_hold", -- 💥 CHANGED: Skipped the cube hint. Straight to action.
-		icon         = "rbxassetid://14922082255",
-	},
-	{
-		id           = "a1_hold",
-		area         = 1,
-		trigger      = "chain",
-		title        = "Hold For Multipliers",
-		body         = "Hold the Red Button! Higher multipliers = More Cash!",
-		target       = "ClickButton", 
-		isMandatory  = true, 
-		holdDuration = 1.5, 
-		bannerPos    = "Center",
-		nextStep     = "a1_mailbox", -- 💥 CHANGED: Skipped the 10-second wait hint.
-		icon         = "rbxassetid://14924185885",
-	},
-	{
-		id           = "a1_mailbox",
-		area         = 1,
-		trigger      = "chain",
-		title        = "Check The Mail!",
-		body         = "Click the MailBox to claim FREE Rewards!",
-		unlockUI     = "Mailbox",
-		isMandatory  = true, 
-		bannerPos    = "Center",
-		icon         = "rbxassetid://14921813212",
-		duration = 10
-	},
-
-	-- CHAIN 2: The Economy Loop
-	{
-		id           = "a1_habitat_full",
-		area         = 1,
-		trigger      = "habitatFull",
-		title        = "Your Habitat is Full!",
-		body         = "Your storage is full! Click the Blue Button to send a ship and FREE up SPACE!",
-		target       = "SendShipBtn", 
-		isMandatory  = true, 
-		bannerPos    = "Center",
-		unlockUI     = "SendShipBtn",  
-		nextStep     = "a1_ship_toggle", 
-		icon         = "rbxassetid://14914018910",
-	},
-	{
-		id           = "a1_ship_toggle",
-		area         = 1,
-		trigger      = "chain",
-		title        = "Automation",
-		body         = "Click here to toggle Auto-Shipping so you don't have to do it manually!",
-		target       = "ToggleShipBtn",
-		isMandatory  = true,
-		bannerPos    = "Center",
-		unlockUI     = "ModeToggle", 
-		nextStep     = "a1_buy_upgrade", 
-		icon         = "rbxassetid://14914018910",
-	},
-	{
-		id           = "a1_buy_upgrade",
-		area         = 1,
-		trigger      = "chain",
-		title        = "Research Shop",
-		body         = "Time to upgrade! Click the Shop Button.",
-		target       = "ShopButton",
-		unlockUI     = "ShopButton",
-		isMandatory  = true,
-		bannerPos    = "Center",
-		nextStep     = "a1_buy_first_upgrade", 
-		icon         = "rbxassetid://14917128076",
-	},
-	{
-		id           = "a1_buy_first_upgrade",
-		area         = 1,
-		trigger      = "chain",
-		title        = "Buy Your First Upgrade",
-		body         = "Click the green $50 button to increase your Aura Value!",
-		target       = "Buy_blockValue", 
-		bannerPos    = "Top",
-		isMandatory  = true, 
-		nextStep     = "a1_close_shop",
-		icon         = "rbxassetid://14914018910",
-	},
-	{
-		id           = "a1_close_shop",
-		area         = 1,
-		trigger      = "chain",
-		title        = "Close The Shop",
-		body         = "Click the Red X to close the shop.",
-		unlockUI     = "ShopCloseBtn",
-		isMandatory  = true, 
-		target       = "ShopCloseBtn", 
-		bannerPos    = "Top",
-		icon         = "rbxassetid://14915225073",
-		-- Stops here and waits for them to hit 20,000 Eval
-	},
-	
-	
-
-	-- CHAIN 3: Prestige and Progress
-	{
-		id           = "a1_try_prestige",
-		area         = 1,
-		trigger      = "farmEvalReached",
-		triggerValue = 20000,
-		title        = "Try Prestiging!",
-		body         = "Click the Prestige button to permanently multiply your earnings!",
-		target       = "PrestigeButton", 
-		isMandatory  = true, 
-		bannerPos    = "Center",
-		unlockUI     = {"MainPrestigeBtn", "SoulAuraDisplay"},
-		nextStep     = "a1_prestige_button",
-		icon         = "rbxassetid://14916846070",
-	},
-	{
-		id           = "a1_prestige_button",
-		area         = 1,
-		trigger      = "chain",
-		title        = "Prestige Now",
-		body         = "Prestige now to get your first permanent earnings increase!",
-		unlockUI     = {"PrestigeBtns", "PrestigeCloseBtn"},
-		isMandatory  = true, 
-		target       = "PrestigeBtns", 
-		bannerPos    = "Top",
-		icon         = "rbxassetid://14923411730",
-		nextStep     = "a1_close_prestige",
-	},
-	{
-		id           = "a1_progress",
-		area         = 1,
-		trigger      = "farmEvalReached",        
-		triggerValue = 50000,                    
-		title        = "Next Area Unlocked",
-		body         = "Click the Travel button to move to the next area!",
-		unlockUI     = {"AreaTravelButton", "PortalCloseBtn"},
-		target       = "AreaTravelButton", 
-		isMandatory  = true, 
-		requirePrestige = true,                  
-		requireStep  = "a1_prestige_button",    
-		bannerPos    = "Center",
-		nextStep     = "a1_arrow_button",        
-		icon         = "rbxassetid://14914000799",
-	},
-	{
-		id           = "a1_arrow_button",
-		area         = 1,
-		trigger      = "chain",
-		title        = "Select The Area",
-		body         = "Click the arrow to view the Uncommon Area!",
-		target       = "ArrowBtn",
-		isMandatory  = true, 
-		bannerPos    = "Top",
-		unlockUI     = "ArrowBtn",
-		nextStep     = "a1_next_area",
-		icon         = "rbxassetid://14914018910",
-	},
-	{
-		id           = "a1_next_area",
-		area         = 1,
-		trigger      = "chain",
-		title        = "Uncommon Area",
-		body         = "Click Travel to progress to the Uncommon Area!",
-		target       = "TravelBtn",
-		unlockUI     = {"TravelBtn", "PortalCloseBtn"},
-		isMandatory  = true, 
-		icon         = "rbxassetid://14914018910",
-	},
-	{
-		id           = "a1_stuck_prestige",
-		area         = 1,
-		trigger      = "timerElapsed",
-		triggerValue = 600,
-		title        = "Keep Going!",
-		body         = "If you feel stuck make sure to prestige and Upgrade more. Also Use Boosts To Help escpecially the Value Booster!",
-	},
-	
-
-
-	---- ══════════ AREA 2: UNCOMMON ══════════
-	{
-		id           = "a2_welcome",
-		area         = 2,
-		trigger      = "areaEnter",
-		title        = "How To Boost",
-		body         = "Click On The Boost Button",
-		target       = "BoostsButton", 
-		isMandatory  = true, 
-		bannerPos    = "Center",
-		unlockUI = 		"BoostsButton",
-		nextStep     = "a2_click_boost",
-		icon = "rbxassetid://14914018910",
-	},
-
-	{
-		id           = "a2_click_boost",
-		area         = 2,
-		trigger      = "chain",
-		delay        = 10,
-		title        = "Buy A Spawn Speed Boost",
-		body         = "Use your GOLDEN AURAS to BUY this BOOST",
-		isMandatory  = true, 
-		target       = "BoostsButton", 
-		unlockUI = 		"BoostsButton",
-		icon = "rbxassetid://14914018910",
-
-	},
-
-
-	-- ══════════ AREA 3: RARE ══════════
-	-- CHAIN 4: Golden Bank 
-	--{
-	--	id           = "a3_golden_auras",
-	--	area         = 3,
-	--	trigger      = "areaEnter",
-	--	title        = "Placeholder Title 21",
-	--	body         = "Placeholder text for step 21.",
-	--	nextStep     = "a3_golden_aura_bank",
-	--},
-	--{
-	--	id           = "a3_golden_aura_bank",
-	--	area         = 3,
-	--	trigger      = "chain",
-	--	title        = "Placeholder Title 22",
-	--	body         = "Placeholder text for step 22.",
-	--	cameraTarget = "GoldenBankModel", -- Replace with actual model name
-	--	nextStep     = "a3_golden_aura_break",
-	--},
-	--{
-	--	id           = "a3_golden_aura_break",
-	--	area         = 3,
-	--	trigger      = "chain",
-	--	title        = "Placeholder Title 23",
-	--	body         = "Placeholder text for step 23.",
-	--	cameraTarget = "GoldenBankModel",
-	--	nextStep     = "a3_epic_research",
-	--},
-
-
-	-- ══════════ AREA 4: EPIC ══════════
-	-- AREA 4 EVENTS EPIC RESEARCH HERE
-	--{
-	--	id           = "a4_welcome",
-	--	area         = 4,
-	--	trigger      = "areaEnter",
-	--	title        = "Placeholder Title 25",
-	--	body         = "Placeholder text for step 25.",
-	--},
-	--{
-	--	id           = "a4_boost_hint",
-	--	area         = 4,
-	--	trigger      = "currencyReached",
-	--	triggerValue = 5000,
-	--	title        = "Placeholder Title 26",
-	--	body         = "Placeholder text for step 26.",
-	--},
-	--{
-	--	id           = "a4_combo_boost",
-	--	area         = 4,
-	--	trigger      = "boostActivated",
-	--	title        = "Placeholder Title 27",
-	--	body         = "Placeholder text for step 27.",
-	--},
-
-
-	-- ══════════ AREA 5: LEGENDARY ══════════
---	-- AREA 5 EVENTS
---	{
---		id           = "a5_welcome",
---		area         = 5,
---		trigger      = "areaEnter",
---		title        = "Placeholder Title 28",
---		body         = "Placeholder text for step 28.",
---	},
---	{
---		id           = "a5_graduation",
---		area         = 5,
---		trigger      = "portalReady",
---		title        = "Placeholder Title 29",
---		body         = "Placeholder text for step 29.",
---	},
-}
-
----------------------------------------------------------------
--- HELPERS
----------------------------------------------------------------
-function TutorialConfig.GetStepsForArea(area)
-	local result = {}
-	for _, step in ipairs(TutorialConfig.Steps) do
-		if step.area == area then table.insert(result, step) end
-	end
-	return result
-end
-
-function TutorialConfig.GetStep(id)
-	for _, step in ipairs(TutorialConfig.Steps) do
-		if step.id == id then return step end
-	end
-	return nil
-end
-
-return TutorialConfig
-
 -- BoostController
 -- Location: StarterPlayer > StarterPlayerScripts > BoostController
 -- FIX: Active boost strip now stacks vertically (was horizontal).
@@ -748,3 +422,198 @@ end
 -- Run it once on start
 task.wait(1) 
 RefreshLook()
+
+-- AchievementController
+-- Location: StarterPlayer > StarterPlayerScripts > AchievementController
+
+local Players           = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TweenService      = game:GetService("TweenService")
+
+local UITheme = require(ReplicatedStorage:WaitForChild("Modules"):WaitForChild("UITheme"))
+local T = UITheme.Get("Custom")
+local SoundConfig = require(ReplicatedStorage:WaitForChild("Modules"):WaitForChild("SoundConfig"))
+
+local player    = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+local mainHUD   = playerGui:WaitForChild("MainHUD")
+
+local panelOpen = false
+local activeTab = "Challenges"
+
+local function PlayUI(id) if shared.PlayUISound then shared.PlayUISound(id) end end
+
+---------------------------------------------------------------
+-- 1. THE CIRCULAR BUTTON (Top Left)
+---------------------------------------------------------------
+local AchieveBtn = Instance.new("ImageButton")
+AchieveBtn.Name = "AchievementButton"
+AchieveBtn.Size = UDim2.new(0, 46, 0, 46)
+AchieveBtn.Position = UDim2.new(0, 20, 0, 20) -- Top Left Corner
+AchieveBtn.BackgroundColor3 = T.buttonSecondary
+AchieveBtn.BorderSizePixel = 0
+AchieveBtn.AutoButtonColor = false
+AchieveBtn.ZIndex = 15
+AchieveBtn.Parent = mainHUD
+
+-- Make it a perfect circle
+Instance.new("UICorner", AchieveBtn).CornerRadius = UDim.new(0.5, 0)
+local btnStroke = Instance.new("UIStroke", AchieveBtn)
+btnStroke.Color = T.accentGold; btnStroke.Thickness = 2
+
+-- PLACEHOLDER: Add your own Trophy or Star Icon ID here!
+local btnIcon = Instance.new("ImageLabel", AchieveBtn)
+btnIcon.Size = UDim2.new(0.6, 0, 0.6, 0)
+btnIcon.Position = UDim2.new(0.2, 0, 0.2, 0)
+btnIcon.BackgroundTransparency = 1
+btnIcon.Image = "rbxassetid://0" -- <-- PUT YOUR ICON ID HERE
+btnIcon.ScaleType = Enum.ScaleType.Fit
+
+---------------------------------------------------------------
+-- 2. THE MAIN PANEL
+---------------------------------------------------------------
+local Panel = Instance.new("Frame")
+Panel.Name = "AchievementPanel"
+Panel.Size = UDim2.new(0.85, 0, 0.75, 0)
+Panel.Position = UDim2.new(0.5, 0, 0.5, 0)
+Panel.AnchorPoint = Vector2.new(0.5, 0.5)
+Panel.BackgroundColor3 = T.panelBG; Panel.BorderSizePixel = 0
+Panel.Visible = false; Panel.ZIndex = 40; Panel.ClipsDescendants = true
+Panel.Parent = mainHUD
+Instance.new("UICorner", Panel).CornerRadius = UDim.new(0, 12)
+
+local sizeConstraint = Instance.new("UISizeConstraint", Panel)
+sizeConstraint.MaxSize = Vector2.new(500, 550) 
+local panelStroke = Instance.new("UIStroke", Panel)
+panelStroke.Color = T.panelStroke; panelStroke.Thickness = 2
+
+-- Header
+local Header = Instance.new("Frame", Panel)
+Header.Size = UDim2.new(1, 0, 0, 44); Header.BackgroundColor3 = T.headerBG; Header.BorderSizePixel = 0; Header.ZIndex = 41
+local TitleLabel = Instance.new("TextLabel", Header)
+TitleLabel.Size = UDim2.new(1, -50, 1, 0); TitleLabel.Position = UDim2.new(0, 14, 0, 0); TitleLabel.BackgroundTransparency = 1
+TitleLabel.Text = "PROGRESSION"; TitleLabel.TextColor3 = T.headerText; TitleLabel.TextScaled = true; TitleLabel.Font = T.font; TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+local CloseBtn = Instance.new("TextButton", Header)
+CloseBtn.Size = UDim2.new(0, 28, 0, 28); CloseBtn.Position = UDim2.new(1, -36, 0.5, -14); CloseBtn.BackgroundColor3 = T.buttonRed; CloseBtn.Text = "X"; CloseBtn.TextColor3 = T.headerText; CloseBtn.TextScaled = true; CloseBtn.Font = T.font; Instance.new("UICorner", CloseBtn).CornerRadius = UDim.new(0, 5)
+
+-- Tab Bar
+local TabBar = Instance.new("Frame", Panel)
+TabBar.Size = UDim2.new(1, -20, 0, 36); TabBar.Position = UDim2.new(0, 10, 0, 50); TabBar.BackgroundTransparency = 1; TabBar.ZIndex = 41
+local tabBtns = {}
+local scrolls = {}
+
+local function MakeTab(name, text, scaleX)
+	local btn = Instance.new("TextButton", TabBar)
+	btn.Size = UDim2.new(0.25, -4, 1, 0); btn.Position = UDim2.new(scaleX, 0, 0, 0)
+	btn.BackgroundColor3 = T.buttonSecondary; btn.Text = text; btn.TextColor3 = T.bodyText; btn.TextScaled = true; btn.Font = T.font
+	Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
+	tabBtns[name] = btn
+
+	local sf = Instance.new("ScrollingFrame", Panel)
+	sf.Size = UDim2.new(1, -20, 1, -96); sf.Position = UDim2.new(0, 10, 0, 96)
+	sf.BackgroundTransparency = 1; sf.BorderSizePixel = 0; sf.ScrollBarThickness = 4; sf.Visible = false
+	local layout = Instance.new("UIListLayout", sf)
+	layout.Padding = UDim.new(0, 8); layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+	layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function() sf.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 10) end)
+	scrolls[name] = sf
+
+	btn.MouseButton1Down:Connect(function()
+		PlayUI(SoundConfig.UIClick or "")
+		activeTab = name
+		for k, b in pairs(tabBtns) do b.BackgroundColor3 = (k == name) and T.panelStroke or T.buttonSecondary end
+		for k, s in pairs(scrolls) do s.Visible = (k == name) end
+	end)
+end
+
+MakeTab("Challenges", "Boosts", 0)
+MakeTab("Index", "Auras", 0.25)
+MakeTab("Badges", "Badges", 0.50)
+MakeTab("Leaderboard", "Top 10", 0.75)
+
+---------------------------------------------------------------
+-- 3. CONTENT BUILDERS (PLACEHOLDERS)
+---------------------------------------------------------------
+local function CreateRow(parent, title, desc, iconColor, statusText, statusColor)
+	local row = Instance.new("Frame", parent)
+	row.Size = UDim2.new(1, 0, 0, 64); row.BackgroundColor3 = T.cardBG; Instance.new("UICorner", row).CornerRadius = UDim.new(0, 8)
+	local stroke = Instance.new("UIStroke", row); stroke.Color = iconColor; stroke.Thickness = 1
+
+	local icon = Instance.new("Frame", row)
+	icon.Size = UDim2.new(0, 40, 0, 40); icon.Position = UDim2.new(0, 12, 0.5, -20); icon.BackgroundColor3 = iconColor; Instance.new("UICorner", icon).CornerRadius = UDim.new(1, 0)
+
+	local tLbl = Instance.new("TextLabel", row)
+	tLbl.Size = UDim2.new(0.6, 0, 0, 20); tLbl.Position = UDim2.new(0, 64, 0, 10); tLbl.BackgroundTransparency = 1; tLbl.Text = title; tLbl.TextColor3 = T.bodyText; tLbl.TextScaled = true; tLbl.Font = T.font; tLbl.TextXAlignment = Enum.TextXAlignment.Left
+
+	local dLbl = Instance.new("TextLabel", row)
+	dLbl.Size = UDim2.new(0.6, 0, 0, 16); dLbl.Position = UDim2.new(0, 64, 0, 32); dLbl.BackgroundTransparency = 1; dLbl.Text = desc; dLbl.TextColor3 = T.subText; dLbl.TextScaled = true; dLbl.Font = T.fontBody; dLbl.TextXAlignment = Enum.TextXAlignment.Left
+
+	local sLbl = Instance.new("TextLabel", row)
+	sLbl.Size = UDim2.new(0, 80, 0, 24); sLbl.Position = UDim2.new(1, -90, 0.5, -12); sLbl.BackgroundTransparency = 1; sLbl.Text = statusText; sLbl.TextColor3 = statusColor; sLbl.TextScaled = true; sLbl.Font = T.font; sLbl.TextXAlignment = Enum.TextXAlignment.Right
+end
+
+-- [ PLACEHOLDER: BOOST CHALLENGES ]
+CreateRow(scrolls["Challenges"], "Spawn 1,000 Auras", "Unlocks: Aura Rush Boost", T.accentBlue, "0/1000", T.subText)
+CreateRow(scrolls["Challenges"], "Reach Area 2", "Unlocks: Soul Boost", T.accentPurple, "LOCKED", T.buttonRed)
+CreateRow(scrolls["Challenges"], "Prestige 5 Times", "Unlocks: 50x Beacon", T.buttonRed, "DONE", T.buttonGreen)
+
+-- [ PLACEHOLDER: AURA INDEX ]
+CreateRow(scrolls["Index"], "Common Aura", "Multiplier: 1.0x", Color3.fromRGB(220, 220, 220), "Discovered", T.buttonGreen)
+CreateRow(scrolls["Index"], "Uncommon Aura", "Multiplier: 1.5x", Color3.fromRGB(80, 200, 80), "Discovered", T.buttonGreen)
+CreateRow(scrolls["Index"], "Legendary Aura", "Multiplier: 25.0x", Color3.fromRGB(255, 200, 0), "???", T.subText)
+
+-- [ PLACEHOLDER: ROBLOX BADGES ]
+-- To award these, you will use BadgeService:AwardBadge(player.UserId, BADGE_ID) in your server scripts!
+CreateRow(scrolls["Badges"], "First Prestige", "Prestige for the first time.", T.accentGold, "LOCKED", T.subText)
+CreateRow(scrolls["Badges"], "Millionaire", "Hold $1,000,000 at once.", T.accentGreen, "EARNED", T.buttonGreen)
+
+-- [ PLACEHOLDER: LEADERBOARD ]
+CreateRow(scrolls["Leaderboard"], "1. MoldySugar2205", "Total Earnings", T.accentGold, "$5.2B", T.accentGreen)
+CreateRow(scrolls["Leaderboard"], "2. PlayerName", "Total Earnings", Color3.fromRGB(192,192,192), "$1.1B", T.accentGreen)
+
+---------------------------------------------------------------
+-- 4. BUTTON JUICE & OPEN/CLOSE
+---------------------------------------------------------------
+local function AddButtonJuice(btn)
+	local scale = btn:FindFirstChildOfClass("UIScale") or Instance.new("UIScale", btn)
+	btn.MouseEnter:Connect(function() TweenService:Create(scale, TweenInfo.new(0.15), {Scale = 1.08}):Play() end)
+	btn.MouseLeave:Connect(function() TweenService:Create(scale, TweenInfo.new(0.15), {Scale = 1}):Play() end)
+	btn.MouseButton1Down:Connect(function() TweenService:Create(scale, TweenInfo.new(0.1), {Scale = 0.9}):Play() end)
+	btn.MouseButton1Up:Connect(function() TweenService:Create(scale, TweenInfo.new(0.2, Enum.EasingStyle.Bounce), {Scale = 1.08}):Play() end)
+end
+
+AddButtonJuice(AchieveBtn)
+AddButtonJuice(CloseBtn)
+
+AchieveBtn.MouseButton1Down:Connect(function()
+	PlayUI(SoundConfig.UIOpen or "")
+	panelOpen = true; Panel.Visible = true; Panel.Size = UDim2.new(0.85, 0, 0, 0)
+
+	-- Force trigger click on the active tab so it displays properly
+	tabBtns[activeTab].BackgroundColor3 = T.panelStroke
+	scrolls[activeTab].Visible = true
+
+	TweenService:Create(Panel, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0.85, 0, 0.75, 0)}):Play()
+	UITheme.SetMenuVisible(true)
+end)
+
+CloseBtn.MouseButton1Down:Connect(function()
+	PlayUI(SoundConfig.UIClose or "")
+	panelOpen = false
+	TweenService:Create(Panel, TweenInfo.new(0.22, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Size = UDim2.new(0.85, 0, 0, 0)}):Play()
+	UITheme.SetMenuVisible(false)
+	task.delay(0.25, function() Panel.Visible = false end)
+end)
+
+-- Glass theme apply
+task.spawn(function()
+	task.wait(1)
+	UITheme.Apply(Panel, "Panel")
+	UITheme.Apply(Header, "TitleBar")
+	UITheme.ApplyShine(Panel)
+	for _, s in pairs(scrolls) do
+		for _, row in ipairs(s:GetChildren()) do
+			if row:IsA("Frame") then UITheme.Apply(row, "Card") end
+		end
+	end
+end)
+
