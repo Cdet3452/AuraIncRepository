@@ -452,11 +452,13 @@ local boostState = {}
 local panelOpen  = false
 local liveGold   = 0
 
-local BOOST_ORDER  = { "AuraRush", "SpawnBoost", "SoulBoost" }
+local BOOST_ORDER  = { "AuraRush", "SpawnBoost", "SoulBoost", "BoostBeacon50x", "CashCheck" } -- Add your new IDs here!
 local BOOST_COLORS = {
-	AuraRush   = Color3.fromRGB(60,  160, 255),
-	SpawnBoost = Color3.fromRGB(255, 160, 40),
-	SoulBoost  = Color3.fromRGB(180, 60,  255),
+	AuraRush       = Color3.fromRGB(60,  160, 255),
+	SpawnBoost     = Color3.fromRGB(255, 160, 40),
+	SoulBoost      = Color3.fromRGB(180, 60,  255),
+	BoostBeacon50x = Color3.fromRGB(255, 50,  50),  -- Example red
+	CashCheck      = Color3.fromRGB(50,  255, 100), -- Example green
 }
 
 local function PlayUI(id)
