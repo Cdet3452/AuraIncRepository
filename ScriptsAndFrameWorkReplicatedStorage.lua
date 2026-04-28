@@ -86,7 +86,6 @@ AdminConfig.PhysicsGoldenReward = 1
 
 return AdminConfig
 
-AreaRegistry:
 -- ══════════ DEVELOPER ECONOMY CHEAT SHEET ══════════
 
 -- [ Hundreds ]
@@ -213,13 +212,130 @@ AreaRegistry:
 -- ═══════════════════════════════════════════════════
 local AreaRegistry = {}
 
+AreaRegistry.LightingPresets = {
+
+	-- 🏭 PHASE 1: THE GRIME (Areas 1-3)
+	["Area1_DeepScrapyard"] = {
+		ClockTime = 12, Brightness = 0.3, SunRaysIntensity = 0,
+		Ambient = Color3.fromRGB(70, 60, 50), FogColor = Color3.fromRGB(90, 80, 65),
+		FogStart = 20, FogEnd = 60, Density = 0.7, Haze = 10, AtmosphereColor = Color3.fromRGB(90, 80, 65)
+	},
+	["Area2_RustyWastes"] = {
+		ClockTime = 14, Brightness = 0.4, SunRaysIntensity = 0,
+		Ambient = Color3.fromRGB(80, 65, 50), FogColor = Color3.fromRGB(100, 85, 60),
+		FogStart = 20, FogEnd = 80, Density = 0.6, Haze = 8, AtmosphereColor = Color3.fromRGB(100, 85, 60)
+	},
+	["Area3_IndustrialOutskirts"] = {
+		ClockTime = 16, Brightness = 0.5, SunRaysIntensity = 0,
+		Ambient = Color3.fromRGB(85, 75, 65), FogColor = Color3.fromRGB(110, 100, 90),
+		FogStart = 30, FogEnd = 100, Density = 0.55, Haze = 6, AtmosphereColor = Color3.fromRGB(110, 100, 90)
+	},
+
+	-- ☣️ PHASE 2: TOXIC ZONES (Areas 4-5)
+	["Area4_ChemicalSpill"] = {
+		ClockTime = 17, Brightness = 0.4, SunRaysIntensity = 0,
+		Ambient = Color3.fromRGB(60, 75, 50), FogColor = Color3.fromRGB(75, 90, 55),
+		FogStart = 50, FogEnd = 110, Density = 0.5, Haze = 7, AtmosphereColor = Color3.fromRGB(75, 90, 55)
+	},
+	["Area5_BioHazard"] = {
+		ClockTime = 17.5, Brightness = 0.3, SunRaysIntensity = 0,
+		Ambient = Color3.fromRGB(40, 60, 40), FogColor = Color3.fromRGB(45, 80, 45),
+		FogStart = 60, FogEnd = 120, Density = 0.4, Haze = 5, AtmosphereColor = Color3.fromRGB(45, 80, 45)
+	},
+
+	-- 🌆 PHASE 3: TWILIGHT SLUMS (Areas 6-8)
+	["Area6_SunsetStrip"] = {
+		ClockTime = 17.8, Brightness = 0.6, SunRaysIntensity = 0.1, -- Sun peeks through!
+		Ambient = Color3.fromRGB(70, 40, 40), FogColor = Color3.fromRGB(90, 40, 30),
+		FogStart = 20, FogEnd = 150, Density = 0.5, Haze = 4, AtmosphereColor = Color3.fromRGB(120, 50, 40)
+	},
+	["Area7_TwilightSector"] = {
+		ClockTime = 18.2, Brightness = 0.4, SunRaysIntensity = 0,
+		Ambient = Color3.fromRGB(40, 30, 60), FogColor = Color3.fromRGB(35, 25, 55),
+		FogStart = 20, FogEnd = 180, Density = 0.55, Haze = 4, AtmosphereColor = Color3.fromRGB(35, 25, 55)
+	},
+	["Area8_NeonSlums"] = {
+		ClockTime = 0, Brightness = 0.5, SunRaysIntensity = 0,
+		Ambient = Color3.fromRGB(30, 20, 50), FogColor = Color3.fromRGB(20, 10, 40),
+		FogStart = 25, FogEnd = 200, Density = 0.5, Haze = 3, AtmosphereColor = Color3.fromRGB(40, 20, 80)
+	},
+
+	-- 🌃 PHASE 4: CYBER CITY (Areas 9-10)
+	["Area9_LowerCyber"] = {
+		ClockTime = 0, Brightness = 0.7, SunRaysIntensity = 0,
+		Ambient = Color3.fromRGB(25, 25, 55), FogColor = Color3.fromRGB(15, 15, 45),
+		FogStart = 30, FogEnd = 250, Density = 0.4, Haze = 2, AtmosphereColor = Color3.fromRGB(20, 20, 60)
+	},
+	["Area10_CyberCore"] = {
+		ClockTime = 0, Brightness = 1, SunRaysIntensity = 0,
+		Ambient = Color3.fromRGB(20, 30, 60), FogColor = Color3.fromRGB(10, 20, 50),
+		FogStart = 50, FogEnd = 400, Density = 0.25, Haze = 1, AtmosphereColor = Color3.fromRGB(15, 25, 65)
+	},
+
+	-- 🌐 PHASE 5: CORPORATE STERILITY (Areas 11-13)
+	["Area11_GlassFacility"] = {
+		ClockTime = 12, Brightness = 2.0, SunRaysIntensity = 0.4, -- Blinding sudden daylight
+		Ambient = Color3.fromRGB(130, 130, 140), FogColor = Color3.fromRGB(200, 220, 240),
+		FogStart = 100, FogEnd = 1500, Density = 0.15, Haze = 0, AtmosphereColor = Color3.fromRGB(200, 220, 240)
+	},
+	["Area12_CrystalLab"] = {
+		ClockTime = 14, Brightness = 2.5, SunRaysIntensity = 0.5,
+		Ambient = Color3.fromRGB(150, 150, 150), FogColor = Color3.fromRGB(220, 240, 255),
+		FogStart = 150, FogEnd = 2500, Density = 0.1, Haze = 0, AtmosphereColor = Color3.fromRGB(220, 240, 255)
+	},
+	["Area13_QuantumGrid"] = {
+		ClockTime = 14, Brightness = 2.2, SunRaysIntensity = 0.3,
+		Ambient = Color3.fromRGB(100, 180, 200), FogColor = Color3.fromRGB(150, 255, 255),
+		FogStart = 200, FogEnd = 3000, Density = 0.05, Haze = 0, AtmosphereColor = Color3.fromRGB(150, 255, 255)
+	},
+
+	-- 🌌 PHASE 6: REALITY BREAKING (Areas 14-16)
+	["Area14_PlasmaCore"] = {
+		ClockTime = 17.5, Brightness = 1.8, SunRaysIntensity = 0.3,
+		Ambient = Color3.fromRGB(150, 80, 150), FogColor = Color3.fromRGB(200, 100, 200),
+		FogStart = 100, FogEnd = 2000, Density = 0.2, Haze = 2, AtmosphereColor = Color3.fromRGB(200, 100, 200)
+	},
+	["Area15_CosmicRift"] = {
+		ClockTime = 6, Brightness = 1.5, SunRaysIntensity = 0.2,
+		Ambient = Color3.fromRGB(100, 30, 150), FogColor = Color3.fromRGB(70, 0, 100),
+		FogStart = 50, FogEnd = 1000, Density = 0.3, Haze = 4, AtmosphereColor = Color3.fromRGB(150, 0, 255)
+	},
+	["Area16_DarkMatter"] = {
+		ClockTime = 0, Brightness = 0.8, SunRaysIntensity = 0,
+		Ambient = Color3.fromRGB(80, 10, 20), FogColor = Color3.fromRGB(40, 0, 5),
+		FogStart = 30, FogEnd = 600, Density = 0.5, Haze = 6, AtmosphereColor = Color3.fromRGB(120, 0, 10)
+	},
+
+	-- ⬛ PHASE 7: THE VOID (Areas 17-20)
+	["Area17_EventHorizon"] = {
+		ClockTime = 0, Brightness = 0.4, SunRaysIntensity = 0,
+		Ambient = Color3.fromRGB(30, 10, 40), FogColor = Color3.fromRGB(15, 5, 20),
+		FogStart = 50, FogEnd = 800, Density = 0.3, Haze = 3, AtmosphereColor = Color3.fromRGB(20, 5, 30)
+	},
+	["Area18_DeepSpace"] = {
+		ClockTime = 0, Brightness = 0.2, SunRaysIntensity = 0,
+		Ambient = Color3.fromRGB(15, 15, 25), FogColor = Color3.fromRGB(5, 5, 15),
+		FogStart = 100, FogEnd = 1500, Density = 0.15, Haze = 1, AtmosphereColor = Color3.fromRGB(5, 5, 15)
+	},
+	["Area19_TheAbyss"] = {
+		ClockTime = 0, Brightness = 0.05, SunRaysIntensity = 0,
+		Ambient = Color3.fromRGB(5, 5, 5), FogColor = Color3.fromRGB(2, 2, 2),
+		FogStart = 200, FogEnd = 3000, Density = 0.05, Haze = 0, AtmosphereColor = Color3.fromRGB(2, 2, 2)
+	},
+	["Area20_UniversalVoid"] = {
+		ClockTime = 0, Brightness = 0, SunRaysIntensity = 0,
+		Ambient = Color3.fromRGB(0, 0, 0), FogColor = Color3.fromRGB(0, 0, 0),
+		FogStart = 500, FogEnd = 5000, Density = 0, Haze = 0, AtmosphereColor = Color3.fromRGB(0, 0, 0)
+	}
+}
+
 AreaRegistry.Areas = {
 	-- [ TUTORIAL AREAS 1-5 KEPT THE SAME ]
-	[1] = { name = "Starter Area",     threshold = 0,   valueMultiplier = 1.0, yOffset = -2.7, yRotation = 180, auraPreviewColor = Color3.fromRGB(200, 200, 200), grassColor = Color3.fromRGB(92, 197, 53), pathColor = Color3.fromRGB(163, 130, 88), ambientColor = Color3.fromRGB(90, 90, 100), fogColor = Color3.fromRGB(180, 200, 220), auraHolderColor = Color3.fromRGB(255, 255, 255), auraHolderGlow = Color3.fromRGB(255, 255, 255) },
-	[2] = { name = "Uncommon Area",    threshold = 5e4, valueMultiplier = 1.5, yOffset = -4.5, yRotation = 180, auraPreviewColor = Color3.fromRGB(100, 200, 100), grassColor = Color3.fromRGB(104, 160, 98), pathColor = Color3.fromRGB(132, 140, 81), ambientColor = Color3.fromRGB(80, 100, 80), fogColor = Color3.fromRGB(160, 200, 160), auraHolderColor = Color3.fromRGB(187, 255, 183), auraHolderGlow = Color3.fromRGB(100, 255, 100) },
-	[3] = { name = "Rare Area",        threshold = 5e5, valueMultiplier = 4.0, yOffset = -2.8, yRotation = 180, auraPreviewColor = Color3.fromRGB(80, 120, 220), grassColor = Color3.fromRGB(2, 226, 170), pathColor = Color3.fromRGB(22, 81, 168), ambientColor = Color3.fromRGB(70, 80, 130), fogColor = Color3.fromRGB(92, 169, 220), auraHolderColor = Color3.fromRGB(75, 87, 255), auraHolderGlow = Color3.fromRGB(56, 86, 255) },
-	[4] = { name = "Epic Area",        threshold = 5e6, valueMultiplier = 8.0, yOffset = -2.8, yRotation = 180, auraPreviewColor = Color3.fromRGB(180, 80, 220), grassColor = Color3.fromRGB(154, 102, 175), pathColor = Color3.fromRGB(71, 34, 90), ambientColor = Color3.fromRGB(90, 50, 120), fogColor = Color3.fromRGB(160, 120, 200), auraHolderColor = Color3.fromRGB(220, 160, 255), auraHolderGlow = Color3.fromRGB(180, 60, 255) },
-	[5] = { name = "Legendary Area",   threshold = 5e7, valueMultiplier = 20.0,yOffset = -3,   yRotation = 0,   auraPreviewColor = Color3.fromRGB(255, 200, 50), grassColor = Color3.fromRGB(160, 120, 20), pathColor = Color3.fromRGB(180, 150, 60), ambientColor = Color3.fromRGB(140, 120, 60), fogColor = Color3.fromRGB(220, 200, 150), auraHolderColor = Color3.fromRGB(255, 230, 120), auraHolderGlow = Color3.fromRGB(255, 180, 0) },
+	[1] = { name = "Starter Area",     threshold = 0,   valueMultiplier = 1.0, yOffset = -2.7, yRotation = 180, auraPreviewColor = Color3.fromRGB(200, 200, 200), grassColor = Color3.fromRGB(92, 197, 53), pathColor = Color3.fromRGB(163, 130, 88), ambientColor = Color3.fromRGB(90, 90, 100), fogColor = Color3.fromRGB(180, 200, 220), auraHolderColor = Color3.fromRGB(255, 255, 255), auraHolderGlow = Color3.fromRGB(255, 255, 255), lightingPreset = "Area1_DeepScrapyard" },
+	[2] = { name = "Uncommon Area",    threshold = 5e4, valueMultiplier = 1.5, yOffset = -4.5, yRotation = 180, auraPreviewColor = Color3.fromRGB(100, 200, 100), grassColor = Color3.fromRGB(104, 160, 98), pathColor = Color3.fromRGB(132, 140, 81), ambientColor = Color3.fromRGB(80, 100, 80), fogColor = Color3.fromRGB(160, 200, 160), auraHolderColor = Color3.fromRGB(187, 255, 183), auraHolderGlow = Color3.fromRGB(100, 255, 100), lightingPreset = "Area2_RustyWastes" },
+	[3] = { name = "Rare Area",        threshold = 5e5, valueMultiplier = 4.0, yOffset = -2.8, yRotation = 180, auraPreviewColor = Color3.fromRGB(80, 120, 220), grassColor = Color3.fromRGB(2, 226, 170), pathColor = Color3.fromRGB(22, 81, 168), ambientColor = Color3.fromRGB(70, 80, 130), fogColor = Color3.fromRGB(92, 169, 220), auraHolderColor = Color3.fromRGB(75, 87, 255), auraHolderGlow = Color3.fromRGB(56, 86, 255), lightingPreset = "Area3_IndustrialOutskirts" },
+	[4] = { name = "Epic Area",        threshold = 5e6, valueMultiplier = 8.0, yOffset = -2.8, yRotation = 180, auraPreviewColor = Color3.fromRGB(180, 80, 220), grassColor = Color3.fromRGB(154, 102, 175), pathColor = Color3.fromRGB(71, 34, 90), ambientColor = Color3.fromRGB(90, 50, 120), fogColor = Color3.fromRGB(160, 120, 200), auraHolderColor = Color3.fromRGB(220, 160, 255), auraHolderGlow = Color3.fromRGB(180, 60, 255), lightingPreset = "Area4_ChemicalSpill" },
+	[5] = { name = "Legendary Area",   threshold = 5e7, valueMultiplier = 20.0,yOffset = -3,   yRotation = 0,   auraPreviewColor = Color3.fromRGB(255, 200, 50), grassColor = Color3.fromRGB(160, 120, 20), pathColor = Color3.fromRGB(180, 150, 60), ambientColor = Color3.fromRGB(140, 120, 60), fogColor = Color3.fromRGB(220, 200, 150), auraHolderColor = Color3.fromRGB(255, 230, 120), auraHolderGlow = Color3.fromRGB(255, 180, 0), lightingPreset = "Area5_BioHazard" },
 
 	-- ✨ THE COSMIC PROGRESSION BEGINS (Egg Inc Style leaps)
 	[6] = {
@@ -303,6 +419,18 @@ function AreaRegistry.GetThreshold(idx)   return AreaRegistry.Areas[idx] and Are
 function AreaRegistry.GetMultiplier(idx)  return (AreaRegistry.Areas[idx] and AreaRegistry.Areas[idx].valueMultiplier) or 1.0 end
 function AreaRegistry.GetYOffset(idx)     return (AreaRegistry.Areas[idx] and AreaRegistry.Areas[idx].yOffset)    or 0 end
 function AreaRegistry.GetYRotation(idx)   return (AreaRegistry.Areas[idx] and AreaRegistry.Areas[idx].yRotation)  or 0 end
+---------------------------------------------------------------
+-- LIGHTING GETTER
+---------------------------------------------------------------
+function AreaRegistry.GetLighting(idx)
+	local area = AreaRegistry.Areas[idx]
+	if not area or not area.lightingPreset then 
+		return AreaRegistry.LightingPresets["ClearDay"] 
+	end
+
+	-- Return the preset data
+	return AreaRegistry.LightingPresets[area.lightingPreset] or AreaRegistry.LightingPresets["ClearDay"]
+end
 
 function AreaRegistry.GetMaxArea()
 	local max = 0
@@ -1953,7 +2081,6 @@ end
 
 return UITheme
 
-UpgradeConfig:
 -- UpgradeConfig --
 -- Location: ReplicatedStorage > Modules > UpgradeConfig
 local AdminConfig = require(script.Parent.AdminConfig)
@@ -1965,56 +2092,32 @@ UpgradeConfig.Tiers = {
 		unlockRequirement = 0,
 		upgrades = {
 			blockValue = {
-				baseCost = 50,
-				costScale = 1.05,
+				baseCost = 50, 
+				costScale = 1.05, 
 				maxLevel = 100,
-				apply = function(data)
+				apply = function(data) 
 					local lv = (data.upgrades and data.upgrades.blockValue) or 0
-					return (AdminConfig.BaseAuraValue or 1) + (lv * 0.2)
+					return (lv * 0.2) 
 				end,
-				displayName = "Glow Enchancement",
-				description = "Increases base aura value by +20%",
+				displayName = "Glow Enhancement", -- (Fixed typo here too!)
+				description = "Increases base aura value by +20%", 
 				iconId = "rbxassetid://14917130166",
 			},
 			hatcheryCapacity = {
-				baseCost = 100,
-				costScale = 1.05,
-				maxLevel = 50,
-				apply = function(data)
-					local lv = (data.upgrades and data.upgrades.hatcheryCapacity) or 0
-					return (AdminConfig.HatcheryMax or 100) + (lv * 10)
-				end,
-				displayName = "Hatchery Expansion",
-				description = "Increases the max capacity of your Hatchery by 10",
-				iconId = "rbxassetid://14923548733",
+				baseCost = 100, costScale = 1.1, maxLevel = 50,
+				apply = function(data) return (AdminConfig.HatcheryMax or 100) + (((data.upgrades and data.upgrades.hatcheryCapacity) or 0) * 1) end,
+				displayName = "Hatchery Expansion", description = "Increases the max capacity of your Hatchery by 1", iconId = "rbxassetid://14923548733",
 			},
 			habitatCapacity = {
-				baseCost = 1500,
-				costScale = 1.2,
-				maxLevel = 20,
-				apply = function(data)
-					local lv = (data.upgrades and data.upgrades.habitatCapacity) or 0
-					return (AdminConfig.BaseHabitatCapacity or 50) + (lv * 10)
-				end,
-				displayName = "Habitat Reservoir",
-				description = "Increase habitat capacity by 10",
-				iconId = "rbxassetid://14915711292",
+				baseCost = 1500, costScale = 1.2, maxLevel = 20,
+				apply = function(data) return (AdminConfig.BaseHabitatCapacity or 50) + (((data.upgrades and data.upgrades.habitatCapacity) or 0) * 10) end,
+				displayName = "Habitat Reservoir", description = "Increase habitat capacity by 10", iconId = "rbxassetid://14915711292",
 			},
 			unlockMythicMult = { 
-				baseCost = 67,
-				costScale = 1,
-				maxLevel = 1, 
-				apply = function(data)
-					local lv = (data.upgrades and data.upgrades.unlockMythicMult) or 0
-					return lv == 1 
-				end,
+				baseCost = 25000, costScale = 1, maxLevel = 1, 
+				apply = function(data) return ((data.upgrades and data.upgrades.unlockMythicMult) or 0) == 1 end,
 				displayName = "Mythic Multi",
-
-				-- ✨ THE FIX: It now physically looks at AdminConfig Tier 6 to get the name and multiplier!
-				description = "Allows you to hold past the legendary multiplier!" .. 
-					AdminConfig.MilestoneData[6].name .. " (" .. 
-					AdminConfig.MilestoneData[6].mult .. "x) tier!",
-
+				description = "Allows you to hold past the legendary multiplier! Unlocks the " .. (AdminConfig.MilestoneData[6] and AdminConfig.MilestoneData[6].name or "MYTHIC") .. " tier!",
 				iconId = "rbxassetid://14921959974",
 			},
 		}
@@ -2024,102 +2127,68 @@ UpgradeConfig.Tiers = {
 		unlockRequirement = 150,
 		upgrades = {
 			blockValueT2 = {
-				baseCost = 1000,
-				costScale = 1.2,
-				maxLevel = 125,
-				apply = function(data)
-					local lv = (data.upgrades and data.upgrades.blockValueT2) or 0
-					return (lv * 0.15) 
-				end,
-				displayName = "Increased Aura Pulse",
-				description = "Insreased aura value by +15%",
-				iconId = "rbxassetid://14923455396",
+				baseCost = 1000, costScale = 1.2, maxLevel = 125,
+				apply = function(data) return (((data.upgrades and data.upgrades.blockValueT2) or 0) * 0.15) end,
+				displayName = "Increased Aura Pulse", description = "Increased aura value by +15%", iconId = "rbxassetid://14923455396",
 			},
 			passiveTickSpeedT2 = {
-				baseCost = 20000,
-				costScale = 1.45,
-				maxLevel = 20,
-				apply = function(data)
-					local lv = (data.upgrades and data.upgrades.passiveTickSpeedT2) or 0
-					return (lv * 0.15)
-				end,
-				displayName = "Advanced Aura Generation",
-				description = "Reduces passive tick speed by 15%",
-				iconId = "rbxassetid://14921959974",
+				baseCost = 20000, costScale = 1.45, maxLevel = 20,
+				apply = function(data) return (((data.upgrades and data.upgrades.passiveTickSpeedT2) or 0) * 0.15) end,
+				displayName = "Advanced Aura Generation", description = "Reduces passive tick speed by 15%", iconId = "rbxassetid://14921959974",
 			},
-			-- 1. The Speed Upgrade (Multiple Levels)
 			multiplierSpeed = {
-				baseCost = 5000,
-				costScale = 1.5,
-				maxLevel = 5,
-				apply = function(data)
-					local lv = (data.upgrades and data.upgrades.multiplierSpeed) or 0
-					return 1 + (lv * 0.05) -- Adds 5% speed per level
-				end,
-				displayName = "Multiplier Speed",
-				description = "Increases how fast your multiplier builds up by 5%.", -- ✨ Fixed to match your math!
-				iconId = "rbxassetid://14921959974",
+				baseCost = 5000, costScale = 1.5, maxLevel = 5,
+				apply = function(data) return 1 + (((data.upgrades and data.upgrades.multiplierSpeed) or 0) * 0.05) end,
+				displayName = "Multiplier Speed", description = "Increases how fast your multiplier builds up by 5%.", iconId = "rbxassetid://14921959974",
 			},			
 			shipCooldown = {
-				baseCost = 1500, 
-				costScale = 1.4, 
-				maxLevel = 10,
-				apply = function(data)
-					local lv = (data.upgrades and data.upgrades.shipCooldown) or 0
-					return 15 - (lv * 1) -- Starts at 15s, reduces by 1s per level
-				end,
-				displayName = "Hyper-Drive Engines",
-				description = "Reduces the manual ship cooldown by 1 second.",
+				baseCost = 1500, costScale = 1.4, maxLevel = 10,
+				apply = function(data) return 15 - (((data.upgrades and data.upgrades.shipCooldown) or 0) * 1) end,
+				displayName = "Hyper-Drive Engines", description = "Reduces the manual ship cooldown by 1 second.",
+			},
+			-- ✨ NEW: Ship Capacity
+			shipCapacityT1 = {
+				baseCost = 8000, costScale = 1.25, maxLevel = 25,
+				apply = function(data) return ((data.upgrades and data.upgrades.shipCapacityT1) or 0) * 50 end,
+				displayName = "Cargo Expansion", description = "Increases the max auras a ship can carry by 50.",
+			},
+			-- ✨ NEW: Golden Aura Drop Chance
+			goldenChanceT1 = {
+				baseCost = 15000, costScale = 1.5, maxLevel = 10,
+				apply = function(data) return ((data.upgrades and data.upgrades.goldenChanceT1) or 0) * 0.5 end,
+				displayName = "Golden Luck", description = "Increases base chance to find Golden Auras by 0.5%.",
 			},
 		}
 	},
 	[3] = {
 		tierName = "Tier 3",
-		unlockRequirement = 150, -- Requires a decent grind in Tier 2
+		unlockRequirement = 150, 
 		upgrades = {
 			auraValueT3 = {
-				baseCost = 250000,
-				costScale = 1.15,
-				maxLevel = 150,
-				apply = function(data)
-					local lv = (data.upgrades and data.upgrades.auraValueT3) or 0
-					return (lv * 0.25) -- +25% per level
-				end,
-				displayName = "Aura Purifier",
-				description = "Purifies Your Auras for more value +25%",
+				baseCost = 250000, costScale = 1.15, maxLevel = 150,
+				apply = function(data) return (((data.upgrades and data.upgrades.auraValueT3) or 0) * 0.25) end,
+				displayName = "Aura Purifier", description = "Purifies Your Auras for more value +25%",
 			},
 			hatcheryT3 = {
-				baseCost = 750000,
-				costScale = 1.3,
-				maxLevel = 25,
-				apply = function(data)
-					local lv = (data.upgrades and data.upgrades.hatcheryT3) or 0
-					return (lv * 50) -- Massive capacity boost
-				end,
-				displayName = "Sub-Atomic Breeding",
-				description = "Uses quantum physics to pack 50 more auras into the hatchery.",
+				baseCost = 750000, costScale = 1.3, maxLevel = 25,
+				apply = function(data) return (((data.upgrades and data.upgrades.hatcheryT3) or 0) * 50) end,
+				displayName = "Sub-Atomic Breeding", description = "Uses quantum physics to pack 50 more auras into the hatchery.",
 			},
 			habitatT3 = {
-				baseCost = 2000000,
-				costScale = 1.4,
-				maxLevel = 15,
-				apply = function(data)
-					local lv = (data.upgrades and data.upgrades.habitatT3) or 0
-					return (lv * 500)
-				end,
-				displayName = "Dimensional Pocketing",
-				description = "Folds space-time within your habitats to add 500 capacity.",
+				baseCost = 2000000, costScale = 1.4, maxLevel = 15,
+				apply = function(data) return (((data.upgrades and data.upgrades.habitatT3) or 0) * 500) end,
+				displayName = "Dimensional Pocketing", description = "Folds space-time within your habitats to add 500 capacity.",
 			},
 			passiveSpeedT3 = {
-				baseCost = 5000000,
-				costScale = 1.5,
-				maxLevel = 10,
-				apply = function(data)
-					local lv = (data.upgrades and data.upgrades.passiveSpeedT3) or 0
-					return (lv * 0.2)
-				end,
-				displayName = "Temporal Overclock",
-				description = "Spawners now operate in a fast-forward time stream (-20% delay).",
+				baseCost = 5000000, costScale = 1.5, maxLevel = 10,
+				apply = function(data) return (((data.upgrades and data.upgrades.passiveSpeedT3) or 0) * 0.2) end,
+				displayName = "Temporal Overclock", description = "Spawners now operate in a fast-forward time stream (-20% delay).",
+			},
+			-- ✨ NEW: Offline Earnings
+			offlineEarningsT1 = {
+				baseCost = 1000000, costScale = 1.3, maxLevel = 20,
+				apply = function(data) return 1 + (((data.upgrades and data.upgrades.offlineEarningsT1) or 0) * 0.1) end,
+				displayName = "Idle Automation", description = "Increases offline/away earnings by 10%.",
 			},
 		}
 	},
@@ -2137,6 +2206,18 @@ UpgradeConfig.Tiers = {
 				apply = function(data) return ((data.upgrades and data.upgrades.hatcheryT4) or 0) * 250 end,
 				displayName = "Schrodinger's Hatchery", description = "Hatchery holds both auras and no auras (+250 capacity).",
 			},
+			-- ✨ NEW: Elite Aura Chance
+			eliteSpawnChance = {
+				baseCost = 25000000, costScale = 1.4, maxLevel = 25,
+				apply = function(data) return ((data.upgrades and data.upgrades.eliteSpawnChance) or 0) * 1.0 end,
+				displayName = "Mutated Genetics", description = "Increases the chance of an Elite Aura spawning by 1%.",
+			},
+			-- ✨ NEW: Drone/Drop frequency
+			droneFrequency = {
+				baseCost = 50000000, costScale = 1.4, maxLevel = 25,
+				apply = function(data) return ((data.upgrades and data.upgrades.droneFrequency) or 0) * 2 end,
+				displayName = "Care Package Routing", description = "Random sky drops appear 2% more frequently.",
+			},
 		}
 	},
 	[5] = {
@@ -2144,11 +2225,22 @@ UpgradeConfig.Tiers = {
 		unlockRequirement = 200,
 		upgrades = {
 			habitatT5 = {
-				baseCost = 5e8, costScale = 1.4, maxLevel = 50, -- 500 Million
+				baseCost = 5e8, costScale = 1.4, maxLevel = 50,
 				apply = function(data) return ((data.upgrades and data.upgrades.habitatT5) or 0) * 2000 end,
 				displayName = "Stellar Habitats", description = "House your auras inside miniature stars (+2,000 capacity).",
 			},
-			-- ✨ Unlocks a new Tier 7 Multiplier in AdminConfig!
+			-- ✨ NEW: Habitat Cost Reduction
+			habitatDiscount = {
+				baseCost = 1e8, costScale = 1.5, maxLevel = 10,
+				apply = function(data) return ((data.upgrades and data.upgrades.habitatDiscount) or 0) * 0.05 end,
+				displayName = "Material Synthesis", description = "Reduces the cost of upgrading habitats by 5%.",
+			},
+			-- ✨ NEW: Automated Dispatch
+			autoDispatchSpeed = {
+				baseCost = 7.5e8, costScale = 1.3, maxLevel = 25,
+				apply = function(data) return ((data.upgrades and data.upgrades.autoDispatchSpeed) or 0) * 0.2 end,
+				displayName = "Logistics AI", description = "Auto-shipping speed increased by 20%.",
+			},
 			unlockCosmicMult = { 
 				baseCost = 2.5e9, costScale = 1, maxLevel = 1, 
 				apply = function(data) return ((data.upgrades and data.upgrades.unlockCosmicMult) or 0) == 1 end,
@@ -2162,14 +2254,35 @@ UpgradeConfig.Tiers = {
 		unlockRequirement = 300,
 		upgrades = {
 			passiveSpeedT6 = {
-				baseCost = 5e10, costScale = 1.5, maxLevel = 25, -- 50 Billion
+				baseCost = 5e10, costScale = 1.5, maxLevel = 25,
 				apply = function(data) return ((data.upgrades and data.upgrades.passiveSpeedT6) or 0) * 0.5 end,
-				displayName = "Faster Than Light", description = "Auras spawn before you even need them (-50% delay per level).",
+				displayName = "Faster Than Light", description = "Auras spawn before you even need them (-50% delay).",
 			},
 			auraValueT6 = {
 				baseCost = 1.5e11, costScale = 1.3, maxLevel = 200,
 				apply = function(data) return ((data.upgrades and data.upgrades.auraValueT6) or 0) * 5.0 end,
 				displayName = "Tachyon Infusion", description = "Infuse auras with speed particles for +500% value per level.",
+			},
+			-- ✨ NEW TIER 6 PADDING (All Max Level 25 for easy tweaking)
+			doubleSpawnChance = {
+				baseCost = 2e10, costScale = 1.35, maxLevel = 25,
+				apply = function(data) return ((data.upgrades and data.upgrades.doubleSpawnChance) or 0) * 1 end,
+				displayName = "Mitosis Splitting", description = "1% chance for a spawner to generate two auras at once.",
+			},
+			offlineTimeCap = {
+				baseCost = 3.5e10, costScale = 1.4, maxLevel = 25,
+				apply = function(data) return ((data.upgrades and data.upgrades.offlineTimeCap) or 0) * 1 end,
+				displayName = "Stasis Batteries", description = "Increases max offline earnings time by 1 hour.",
+			},
+			goldenAuraValue = {
+				baseCost = 8e10, costScale = 1.5, maxLevel = 25,
+				apply = function(data) return ((data.upgrades and data.upgrades.goldenAuraValue) or 0) * 0.1 end,
+				displayName = "Refined Gold", description = "Golden Auras collected grant +10% more premium currency.",
+			},
+			shippingCapacityT6 = {
+				baseCost = 1e11, costScale = 1.45, maxLevel = 25,
+				apply = function(data) return ((data.upgrades and data.upgrades.shippingCapacityT6) or 0) * 5000 end,
+				displayName = "Wormhole Freight", description = "Ships carry +5,000 more auras through hyperspace.",
 			},
 		}
 	},
@@ -2178,7 +2291,7 @@ UpgradeConfig.Tiers = {
 		unlockRequirement = 500,
 		upgrades = {
 			hatcheryT7 = {
-				baseCost = 1e13, costScale = 1.4, maxLevel = 100, -- 10 Trillion
+				baseCost = 1e13, costScale = 1.4, maxLevel = 100,
 				apply = function(data) return ((data.upgrades and data.upgrades.hatcheryT7) or 0) * 10000 end,
 				displayName = "Void Reservoirs", description = "Store energy in the endless void (+10,000 capacity).",
 			},
@@ -2187,6 +2300,17 @@ UpgradeConfig.Tiers = {
 				apply = function(data) return ((data.upgrades and data.upgrades.habitatT7) or 0) * 50000 end,
 				displayName = "Antimatter Containment", description = "Safely store massive amounts of auras (+50,000 capacity).",
 			},
+			-- ✨ NEW
+			prestigeMultiplierBonus = {
+				baseCost = 2e13, costScale = 1.6, maxLevel = 10,
+				apply = function(data) return ((data.upgrades and data.upgrades.prestigeMultiplierBonus) or 0) * 0.05 end,
+				displayName = "Soul Memory", description = "Increases the multiplier gained from Prestiging by 5%.",
+			},
+			droneRewardMulti = {
+				baseCost = 8e13, costScale = 1.5, maxLevel = 25,
+				apply = function(data) return ((data.upgrades and data.upgrades.droneRewardMulti) or 0) * 0.5 end,
+				displayName = "Heavier Payloads", description = "Random drops contain 50% more resources.",
+			},
 		}
 	},
 	[8] = {
@@ -2194,13 +2318,23 @@ UpgradeConfig.Tiers = {
 		unlockRequirement = 1000,
 		upgrades = {
 			auraValueT8 = {
-				baseCost = 5e15, costScale = 1.35, maxLevel = 250, -- 5 Quadrillion
+				baseCost = 5e15, costScale = 1.35, maxLevel = 250,
 				apply = function(data) return ((data.upgrades and data.upgrades.auraValueT8) or 0) * 25.0 end,
 				displayName = "Reality Bending", description = "Auras pull value from alternate dimensions (+2,500% value).",
 			},
-			-- ✨ Unlocks a new Tier 8 Multiplier in AdminConfig!
+			-- ✨ NEW
+			godlyCritChance = {
+				baseCost = 1e16, costScale = 1.4, maxLevel = 25,
+				apply = function(data) return ((data.upgrades and data.upgrades.godlyCritChance) or 0) * 0.2 end,
+				displayName = "Divine Intervention", description = "0.2% chance for an aura to instantly max out its value.",
+			},
+			habitatT8 = {
+				baseCost = 8e16, costScale = 1.5, maxLevel = 100,
+				apply = function(data) return ((data.upgrades and data.upgrades.habitatT8) or 0) * 250000 end,
+				displayName = "Pocket Universes", description = "Creates entire universes to hold your auras (+250,000 capacity).",
+			},
 			unlockGodlyMult = { 
-				baseCost = 1e17, costScale = 1, maxLevel = 1, -- 100 Quadrillion
+				baseCost = 1e17, costScale = 1, maxLevel = 1,
 				apply = function(data) return ((data.upgrades and data.upgrades.unlockGodlyMult) or 0) == 1 end,
 				displayName = "Godly Multiplier", 
 				description = "Reach ascension. Unlocks the " .. (AdminConfig.MilestoneData[8] and AdminConfig.MilestoneData[8].name or "GODLY") .. " tier!",
@@ -2212,7 +2346,7 @@ UpgradeConfig.Tiers = {
 		unlockRequirement = 1500,
 		upgrades = {
 			habitatT9 = {
-				baseCost = 1e19, costScale = 1.5, maxLevel = 150, -- 10 Quintillion
+				baseCost = 1e19, costScale = 1.5, maxLevel = 150,
 				apply = function(data) return ((data.upgrades and data.upgrades.habitatT9) or 0) * 1000000 end,
 				displayName = "Galaxy Clusters", description = "Your habitats are now comprised of entire galaxies (+1M capacity).",
 			},
@@ -2220,6 +2354,12 @@ UpgradeConfig.Tiers = {
 				baseCost = 5e19, costScale = 1.5, maxLevel = 150,
 				apply = function(data) return ((data.upgrades and data.upgrades.hatcheryT9) or 0) * 500000 end,
 				displayName = "Big Bang Forges", description = "Hatch energy from the birth of new universes (+500k capacity).",
+			},
+			-- ✨ NEW
+			universalShipping = {
+				baseCost = 8e19, costScale = 1.45, maxLevel = 50,
+				apply = function(data) return ((data.upgrades and data.upgrades.universalShipping) or 0) * 1000000 end,
+				displayName = "Teleportation Networks", description = "Instantly beam auras to buyers (+1M shipping capacity).",
 			},
 			unlockUniversalMult = { 
 				baseCost = 1e20, costScale = 1, maxLevel = 1, 
@@ -2234,9 +2374,20 @@ UpgradeConfig.Tiers = {
 		unlockRequirement = 2500,
 		upgrades = {
 			auraValueT10 = {
-				baseCost = 1e22, costScale = 1.4, maxLevel = 500, -- 10 Sextillion
+				baseCost = 1e22, costScale = 1.4, maxLevel = 500,
 				apply = function(data) return ((data.upgrades and data.upgrades.auraValueT10) or 0) * 150.0 end,
 				displayName = "Limitless Potential", description = "The ultimate value upgrade. +15,000% value per level.",
+			},
+			-- ✨ NEW
+			omniCapacity = {
+				baseCost = 5e22, costScale = 1.5, maxLevel = 500,
+				apply = function(data) return ((data.upgrades and data.upgrades.omniCapacity) or 0) * 10000000 end,
+				displayName = "The Final Frontier", description = "Unfathomable space (+10M habitat capacity).",
+			},
+			omniSpeed = {
+				baseCost = 8e22, costScale = 1.6, maxLevel = 100,
+				apply = function(data) return ((data.upgrades and data.upgrades.omniSpeed) or 0) * 2.0 end,
+				displayName = "Time Collapse", description = "Auras generate infinitely fast (-200% delay multiplier).",
 			},
 			unlockOmniMult = { 
 				baseCost = 5e23, costScale = 1, maxLevel = 1,
@@ -2269,7 +2420,6 @@ function UpgradeConfig.CalculateCost(upgradeId, currentLevel)
 end
 
 return UpgradeConfig
-
 local WeatherConfig = {
 	CycleTime = 60, -- 5 minutes per weather cycle
 	EventChance = 0.35, -- 35% chance to roll a storm
