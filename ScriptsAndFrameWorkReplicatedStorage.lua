@@ -1,90 +1,5 @@
 local AdminConfig = {}
 
-AdminConfig.FireRate             = 0.25
-AdminConfig.BaseAuraValue        = 1
-AdminConfig.BaseHabitatCapacity  = 80
-AdminConfig.ShipInterval         = 6
-AdminConfig.TierOverride         = nil
-AdminConfig.WipeMoneyOnLoad      = true
-AdminConfig.WipePrestigeOnLoad   = true  
-AdminConfig.WipeAreaOnLoad       = true  
-AdminConfig.AutoDispatch         = false
-
-AdminConfig.PlatformCapacity     = 25
-AdminConfig.PlatformSpeed        = 20
-AdminConfig.PlatformHoverHeight  = 5
-AdminConfig.MaxTrucks            = 3
-AdminConfig.PassiveInterval      = 10
-
-AdminConfig.MilestoneData = {
-	[1] = {time = 0, mult = 1.0, luck = 0,    name = "NORMAL",     color = Color3.fromRGB(255, 0, 0),    sound = ""},
-	[2] = {time = 1, mult = 1.5, luck = 0.05, name = "UNCOMMON!",  color = Color3.fromRGB(100, 200, 100), sound = ""},
-	[3] = {time = 2, mult = 2.0, luck = 0.10, name = "RARE!",      color = Color3.fromRGB(80, 120, 220),  sound = ""},
-	[4] = {time = 4, mult = 3.0, luck = 0.15, name = "EPIC!",      color = Color3.fromRGB(180, 80, 220),  sound = ""},
-	[5] = {time = 7, mult = 5.0, luck = 0.20, name = "LEGENDARY!", color = Color3.fromRGB(255, 200, 50),  sound = ""},
-	[6] = {time = 12, mult = 10.0, luck = 0.30, name = "MYTHIC!",  color = Color3.fromRGB(157, 0, 255),   sound = ""},
-	-- ✨ THE COSMIC TIERS (Egg Inc style exponential leaps!)
-	[7] = {time = 20, mult = 25.0, luck = 0.45, name = "COSMIC!",  color = Color3.fromRGB(0, 255, 255),   sound = ""},
-	[8] = {time = 35, mult = 100.0,luck = 0.60, name = "GODLY!",   color = Color3.fromRGB(255, 255, 0),   sound = ""},
-	[9] = {time = 55, mult = 500.0,luck = 0.80, name = "UNIVERSAL!",color= Color3.fromRGB(255, 255, 255), sound = ""},
-	[10]= {time = 90, mult = 2500.0,luck=1.00,  name = "OMNI!",    color = Color3.fromRGB(20, 20, 20),    sound = ""},
-}
-
-AdminConfig.HatcheryMax              = 150
-AdminConfig.HatcheryDrainRate        = 8
-AdminConfig.HatcheryRefillRate       = 12
-AdminConfig.HatcheryInstantLegendary = false
-AdminConfig.HatcheryFastRefill       = false
-
-AdminConfig.MutationSpeedMultiplier  = 1
-AdminConfig.MutationTickInterval     = 1
-AdminConfig.MutationInstantMax       = false
-AdminConfig.MutationMaxTierIndex     = 3
-
-AdminConfig.PrestigeStartBonusPercent = 0.05
-AdminConfig.TestTimerDuration         = 0
-AdminConfig.DisableShipping           = false
-
-AdminConfig.AdminUserIds = { 2359024102, 305557572 }
-
--- Kept for backwards compat — AreaRegistry is authoritative
-AdminConfig.AreaThresholds       = { [1]=0, [2]=5e5, [3]=5e6, [4]=5e7, [5]=5e8}
-AdminConfig.AreaValueMultipliers = { [1]=1.0, [2]=1.5, [3]=3.0, [4]=8.0, [5]=20.0}
-AdminConfig.AreaNames            = { [1]="Starter Area",[2]="Uncommon Area",[3]="Rare Area",[4]="Epic Area",[5]="Legendary Area"}
-AdminConfig.MaxArea              = 25
-
-AdminConfig.GoldenAuraStart = 0
-
--- AURA PHYSICS (CRANKED UP)
-AdminConfig.PhysicsSpawnMin = 10
-AdminConfig.PhysicsSpawnMax = 30
-AdminConfig.PhysicsEliteChance = 20
-
-AdminConfig.PhysicsRegularDespawn = 8
-AdminConfig.PhysicsEliteDespawn = 4
-
--- AURA PHYSICS (MAX AIR TIME & WALL BOUNCES)
-AdminConfig.PhysicsUpwardForceMin = 180   -- High launch to stay in air
-AdminConfig.PhysicsUpwardForceMax = 240   
-AdminConfig.PhysicsOutwardForceMin = 150  -- High horizontal to reach the walls
-AdminConfig.PhysicsOutwardForceMax = 220  
-
--- Bounce Control
-AdminConfig.PhysicsMaxBouncesRegular = 0 
-AdminConfig.PhysicsMaxBouncesElite = 2
-
-AdminConfig.PhysicsErraticIntervalMin = 0.3
-AdminConfig.PhysicsErraticIntervalMax = 0.8
-AdminConfig.PhysicsErraticForceH = 70    -- Increased for more air-time chaos
-AdminConfig.PhysicsErraticForceV = 10
-
-AdminConfig.PhysicsRegularMultiplier = 10
-AdminConfig.PhysicsEliteMultiplier = 50
-
-AdminConfig.PhysicsEliteGoldenChance = 10
-AdminConfig.PhysicsGoldenReward = 1
-
-return AdminConfig
 
 -- ══════════ DEVELOPER ECONOMY CHEAT SHEET ══════════
 
@@ -1210,7 +1125,7 @@ SoundConfig.PlatformLeave  = "2609873966"
 SoundConfig.TierUpgrade    = "3314301672"
 SoundConfig.LegendarySpawn = "3932668730"
 SoundConfig.MutationBonus  = ""
-SoundConfig.Purchase       = "2609873966"
+SoundConfig.Purchase       = ""
 
 ---------------------------------------------------------------
 -- PORTAL / AREA
