@@ -1907,7 +1907,8 @@ local ServerScriptService = game:GetService("ServerScriptService")
 
 local AdminConfig = require(ReplicatedStorage.Modules.AdminConfig)
 local GameManager = require(ServerScriptService.GameManager)
-local BoostConfig = require(ReplicatedStorage.Modules.BoostConfig) -- ADD THIS
+local BoostConfig = require(ReplicatedStorage.Modules.BoostConfig)
+local AchievementConfig = require(ReplicatedStorage.Modules.AchievementConfig)
 local function GetOrCreate(name)
 	local existing = ReplicatedStorage.RemoteEvents:FindFirstChild(name)
 	if existing then return existing end
@@ -1995,6 +1996,7 @@ function BoostManager.GetSoulMultiplier(uid)
 	end
 	return 1
 end
+
 local function BuildState(uid)
 	PruneExpired(uid)
 	local stacks = activeStacks[uid] or {}
@@ -2048,7 +2050,8 @@ BuyBoost.OnServerEvent:Connect(function(player, boostId)
 
 	local cost = cfg.cost or 0
 	if (data.goldenAuras or 0) < cost then return end
-
+	local isUnlocked = AchievementConfig.IsBoostUnlocked(boostId, data)
+	if not isUnlocked then return end 
 	data.goldenAuras = (data.goldenAuras or 0) - cost
 	data.boostInventory = data.boostInventory or {}
 	data.boostInventory[boostId] = (data.boostInventory[boostId] or 0) + 1
@@ -2120,6 +2123,7 @@ task.spawn(function()
 end)
 
 return BoostManager
+
 GameManager:
 -- GameManager
 -- Location: ServerScriptService > GameManager (ModuleScript)
@@ -2321,6 +2325,12 @@ local function LoadData(player)
 		d.GoldenAuras = 0
 		d.epicUpgrades = {}
 	end
+	
+	if AdminConfig.WipeAchievementsOnLoad then
+		d.totalCubesProduced = 0
+		d.totalLegendaryCubes = 0
+		d.totalPlatformsShipped = 0
+	end
 
 	-- Safety: Phase 4 fields always exist, never wiped
 	if not d.epicUpgrades     then d.epicUpgrades     = {} end
@@ -2354,6 +2364,8 @@ local function LoadData(player)
 		tutorialProgress     = d.tutorialProgress   or {},
 		tutorialComplete     = d.tutorialComplete   or false,
 		epicUpgrades         = d.epicUpgrades       or {},
+		totalCubesProduced   = d.totalCubesProduced or 0,
+		currentArea          = d.currentArea or 1,
 	})
 
 	-- FIX: Send UpgradeUpdated fullState so ShopController has data on join
@@ -2492,6 +2504,7 @@ game:BindToClose(function()
 end)
 
 return GameManager
+
 
 
 
