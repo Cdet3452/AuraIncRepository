@@ -611,108 +611,76 @@ end
 return BoostConfig
 
 EpicUpgradeConfig:
--- EpicUpgradeConfig
--- Location: ReplicatedStorage > Modules > EpicUpgradeConfig
-
 local EpicUpgradeConfig = {}
 
--- Fixed: Moved all upgrades into a Tier structure so GetUpgradeConfig can find them
+-- 1. TABS REMOVED: Everything sits in one clean panel now!
+EpicUpgradeConfig.Tabs = {"Epic"} 
+
+-- 2. DYNAMIC SCALING MATH
+local function scaleCost(base, growth, level)
+	return math.floor(base * math.pow(growth, level))
+end
+
+-- 3. THE UPGRADES
 EpicUpgradeConfig.Tiers = {
-	[1] = {
-		tierName = "Epic Research",
+	{
+		tierName = "Permanent Upgrades",
 		unlockRequirement = 0,
 		upgrades = {
-			-- ACTIVE
-			epicDropRate = { 
-				category = "Active", baseCost=5, costScale=1.8, maxLevel=10, displayName="Hatchery Efficiency", description="+5% hatchery drain speed per level.",
-				apply = function(d) return 1 + ((d.epicUpgrades and d.epicUpgrades.epicDropRate) or 0) * 0.05 end 
+			["epicAuraValue"] = {
+				displayName = "Aura Value Multiplier",
+				description = "Permanently increases the base value of all generated Auras by +10% per level.",
+				iconId = "rbxassetid://0", 
+				maxLevel = 50, category = "Epic", baseCost = 10, costGrowth = 1.3,
+				apply = function(d) return 1 + ((d.epicUpgrades and d.epicUpgrades.epicAuraValue) or 0) * 0.1 end
 			},
-			epicBlockValue = { 
-				category = "Active",baseCost=8, costScale=1.8, maxLevel=10, displayName="Permanent Value", description="+8% base cube value per level.",
-				apply = function(d) return 1 + ((d.epicUpgrades and d.epicUpgrades.epicBlockValue) or 0) * 0.08 end 
+			["epicHoldSpeed"] = {
+				displayName = "Turbo Purchasing",
+				description = "Increases how fast you buy regular upgrades when holding down the button.",
+				iconId = "rbxassetid://0", 
+				maxLevel = 10, category = "Epic", baseCost = 25, costGrowth = 1.5,
+				apply = function(d) return 1 + ((d.epicUpgrades and d.epicUpgrades.epicHoldSpeed) or 0) * 0.3 end
 			},
-			epicPlatformCap = { 
-				category = "Active",baseCost=10, costScale=2.0, maxLevel=8, displayName="Platform Capacity", description="+3 cubes per platform per level.",
-				apply = function(d) return ((d.epicUpgrades and d.epicUpgrades.epicPlatformCap) or 0) * 3 end 
+			["epicMoveSpeed"] = {
+				displayName = "Swiftness",
+				description = "Permanently increases your character's walking speed.",
+				iconId = "rbxassetid://0", 
+				maxLevel = 15, category = "Epic", baseCost = 15, costGrowth = 1.4,
+				apply = function(d) return ((d.epicUpgrades and d.epicUpgrades.epicMoveSpeed) or 0) * 1 end
 			},
-			epicShipSpeed = { 
-				category = "Active",baseCost=12, costScale=2.0, maxLevel=8, displayName="Dispatch Speed", description="-0.3s ship interval per level (min 2s).",
-				apply = function(d) return ((d.epicUpgrades and d.epicUpgrades.epicShipSpeed) or 0) * 0.3 end 
+			["epicClickMilestone"] = {
+				displayName = "Milestone Momentum",
+				description = "Reduces the clicks/time required to reach the next clicker milestone.",
+				iconId = "rbxassetid://0", 
+				maxLevel = 20, category = "Epic", baseCost = 50, costGrowth = 1.6,
+				apply = function(d) return ((d.epicUpgrades and d.epicUpgrades.epicClickMilestone) or 0) * 2 end
 			},
-			epicHatcheryRefill = { 
-				category = "Active",baseCost=6, costScale=1.8, maxLevel=10, displayName="Hatchery Refill", description="+8% hatchery refill speed per level.",
-				apply = function(d) return 1 + ((d.epicUpgrades and d.epicUpgrades.epicHatcheryRefill) or 0) * 0.08 end 
-			},
-			-- PASSIVE
-			epicPassiveRate = { 
-				category = "Passive",baseCost=4, costScale=1.5, maxLevel=20, displayName="Passive Income", description="+10% passive income per level.",
-				apply = function(d) return 1 + ((d.epicUpgrades and d.epicUpgrades.epicPassiveRate) or 0) * 0.10 end 
-			},
-			epicIdleMult = { 
-				category = "Passive",baseCost=5, costScale=1.5, maxLevel=20, displayName="Idle Multiplier", description="+5% earnings while not clicking.",
-				apply = function(d) return 1 + ((d.epicUpgrades and d.epicUpgrades.epicIdleMult) or 0) * 0.05 end 
-			},
-			epicRestingBonus = { 
-				category = "Passive",baseCost=8, costScale=1.8, maxLevel=10, displayName="Resting Value", description="+3% mutation value per level.",
-				apply = function(d) return 1 + ((d.epicUpgrades and d.epicUpgrades.epicRestingBonus) or 0) * 0.03 end 
-			},
-			epicAFKPersist = { 
-				category = "Passive",baseCost=15, costScale=2.0, maxLevel=10, displayName="AFK Persistence", description="+5 min full-speed AFK per level.",
-				apply = function(d) return ((d.epicUpgrades and d.epicUpgrades.epicAFKPersist) or 0) * 5 end 
-			},
-			-- LUCK
-			epicUncommonLuck = { 
-				category = "Luck",baseCost=3, costScale=1.5, maxLevel=10, displayName="Uncommon Luck", description="+0.5% Uncommon spawn chance per level.",
-				apply = function(d) return ((d.epicUpgrades and d.epicUpgrades.epicUncommonLuck) or 0) * 0.005 end 
-			},
-			epicRareLuck = { 
-				category = "Luck",baseCost=6, costScale=1.8, maxLevel=10, displayName="Rare Luck", description="+0.3% Rare spawn chance per level.",
-				apply = function(d) return ((d.epicUpgrades and d.epicUpgrades.epicRareLuck) or 0) * 0.003 end 
-			},
-			epicEpicLuck = { 
-				category = "Luck",baseCost=12, costScale=2.0, maxLevel=10, displayName="Epic Luck", description="+0.15% Epic spawn chance per level.",
-				apply = function(d) return ((d.epicUpgrades and d.epicUpgrades.epicEpicLuck) or 0) * 0.0015 end 
-			},
-			epicLegendaryLuck = { 
-				category = "Luck",baseCost=25, costScale=2.5, maxLevel=5, displayName="Legendary Luck", description="+0.05% Legendary spawn chance per level.",
-				apply = function(d) return ((d.epicUpgrades and d.epicUpgrades.epicLegendaryLuck) or 0) * 0.0005 end 
-			},
-			epicMutationBoost = { 
-				category = "Luck",baseCost=5, costScale=1.5, maxLevel=20, displayName="Mutation Boost", description="+2% all non-Common mutation chances.",
-				apply = function(d) return ((d.epicUpgrades and d.epicUpgrades.epicMutationBoost) or 0) * 0.02 end 
-			},
+			["epicPrestigeReward"] = {
+				displayName = "Soul Aura Mastery",
+				description = "Increases the amount of Soul Auras you receive when prestiging by +5% per level.",
+				iconId = "rbxassetid://0", 
+				maxLevel = 25, category = "Epic", baseCost = 100, costGrowth = 1.8,
+				apply = function(d) return 1 + ((d.epicUpgrades and d.epicUpgrades.epicPrestigeReward) or 0) * 0.05 end
+			}
 		}
 	}
 }
 
--- HELPER: Search through Tiers to find specific upgrade data
 function EpicUpgradeConfig.GetUpgradeConfig(upgradeId)
 	for _, tierData in ipairs(EpicUpgradeConfig.Tiers) do
-		if tierData.upgrades[upgradeId] then
-			return tierData.upgrades[upgradeId]
-		end
+		if tierData.upgrades[upgradeId] then return tierData.upgrades[upgradeId] end
 	end
 	return nil
 end
 
--- HELPER: Renamed to match the Regular system (CalculateCost)
 function EpicUpgradeConfig.CalculateCost(upgradeId, currentLevel)
 	local cfg = EpicUpgradeConfig.GetUpgradeConfig(upgradeId)
 	if not cfg then return math.huge end
 	if currentLevel >= cfg.maxLevel then return math.huge end
-
-	return math.floor(cfg.baseCost * (cfg.costScale ^ currentLevel))
+	return scaleCost(cfg.baseCost, cfg.costGrowth, currentLevel)
 end
 
--- UI METADATA: Required for ShopController to build the tabs
-EpicUpgradeConfig.Tabs = { "Active", "Passive", "Luck" }
-
-EpicUpgradeConfig.TabColors = {
-	Active  = Color3.fromRGB(60, 180, 255), 
-	Passive = Color3.fromRGB(120, 220, 160), 
-	Luck    = Color3.fromRGB(220, 160, 255),
-}
-
+EpicUpgradeConfig.TabColors = { Epic = Color3.fromRGB(150, 80, 255) }
 return EpicUpgradeConfig
 
 MailConfig:
