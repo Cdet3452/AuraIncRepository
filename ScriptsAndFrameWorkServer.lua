@@ -861,13 +861,27 @@ local function SpawnAura(player, data, runtime, holdMult, luckBonus)
 	local tierIndex = 1
 	for i, t in ipairs(TierConfig.Tiers) do if t.name == tier.name then tierIndex=i; break end end
 
-	local blockCfg = UpgradeConfig.GetUpgradeConfig("blockValue")
-	local valueMultiplier = blockCfg and blockCfg.apply(data) or 1
+	-- ✨ THE ADDITIVE MATH FIX: Gather ALL Value Upgrades!
+	local totalValueMultiplier = 1.0 -- Starts at 100% base value
+	local valueUpgrades = {
+		"blockValue", "blockValueT2", "auraValueT3", 
+		"auraValueT4", "auraValueT6", "auraValueT8", "auraValueT10"
+	}
+
+	for _, upgradeId in ipairs(valueUpgrades) do
+		local cfg = UpgradeConfig.GetUpgradeConfig(upgradeId)
+		if cfg and cfg.apply then
+			totalValueMultiplier += cfg.apply(data) -- Additively stack the percentages!
+		end
+	end
+
 	local prestigeMult    = PrestigeModule.GetMultiplier(data.soulAuras)
-	local areaMult        = AreaRegistry.GetMultiplier(data.currentArea or 1)  -- FIX
+	local areaMult        = AreaRegistry.GetMultiplier(data.currentArea or 1)
 	local boostValueMult  = BoostManager.GetValueMultiplier(uid)
 	local _, weatherValueMult = WeatherManager.GetMultipliers(uid)
-	local baseValue  = math.floor(AdminConfig.BaseAuraValue * tier.multiplier * valueMultiplier * prestigeMult * areaMult * boostValueMult * weatherValueMult)
+
+	-- Apply the strictly additive totalValueMultiplier
+	local baseValue  = math.floor(AdminConfig.BaseAuraValue * tier.multiplier * totalValueMultiplier * prestigeMult * areaMult * boostValueMult * weatherValueMult)
 	local totalValue = baseValue + math.floor(baseValue * (holdMult - 1))
 
 	local spawnPos = HABITAT_PART.Position + Vector3.new(math.random(-3,3), 10, math.random(-3,3))
@@ -2302,6 +2316,11 @@ local function LoadData(player)
 		d.unlockedAreas        = { 1 }
 		d.hasPrestigedThisArea = false   -- FIX: reset on area wipe
 	end
+	
+	if AdminConfig.WipeEpicOnLoad then
+		d.GoldenAuras = 0
+		d.epicUpgrades = {}
+	end
 
 	-- Safety: Phase 4 fields always exist, never wiped
 	if not d.epicUpgrades     then d.epicUpgrades     = {} end
@@ -2473,6 +2492,8 @@ game:BindToClose(function()
 end)
 
 return GameManager
+
+
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
