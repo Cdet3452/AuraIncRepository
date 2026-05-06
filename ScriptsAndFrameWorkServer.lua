@@ -1,4 +1,3 @@
-AreaManager:
 -- AreaManager
 -- Location: ServerScriptService > AreaManager
 --
@@ -329,7 +328,8 @@ Players.PlayerRemoving:Connect(function(player)
 	lastPortalEntry[player.UserId] = nil
 end)
 
-AuraPhysicsManager:
+
+
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 local TweenService = game:GetService("TweenService")
@@ -397,7 +397,7 @@ local function CreatePhysicsAura(isElite)
 	local outF = math.random(AdminConfig.PhysicsOutwardForceMin, AdminConfig.PhysicsOutwardForceMax)
 	local upF = math.random(AdminConfig.PhysicsUpwardForceMin, AdminConfig.PhysicsUpwardForceMax)
 	mainPart:ApplyImpulse(Vector3.new(math.cos(angle)*outF, upF, math.sin(angle)*outF) * mainPart.AssemblyMass)
-	
+
 	local sfxFolder = ReplicatedStorage:FindFirstChild("SFX")
 	if sfxFolder and sfxFolder:FindFirstChild("AuraShoot") then
 		local sfx = sfxFolder.AuraShoot:Clone()
@@ -412,7 +412,7 @@ local function CreatePhysicsAura(isElite)
 		sfx:Play()
 		Debris:AddItem(sfx, 2)
 	end
-	
+
 	-- ✨ NEW: SPAWN VFX
 	local vfxFolder = ReplicatedStorage:FindFirstChild("VFX")
 	if vfxFolder and vfxFolder:FindFirstChild("AuraSpawnVFX") then
@@ -428,7 +428,7 @@ local function CreatePhysicsAura(isElite)
 		end
 		Debris:AddItem(spawnEffect, 3) -- Deletes the effect part after 3 seconds
 	end
-	
+
 	-- 9. CLICK & REWARDS (🛡️ Back to Custom Style)
 	local prompt = Instance.new("ProximityPrompt")
 	prompt.Name = "AuraPrompt"
@@ -575,11 +575,10 @@ if RemoteEvents then
 		end)
 	end)
 end
-AuraSpawner:
+
 -- AuraSpawner
 -- Location: ServerScriptService > AuraSpawner
--- FIX: areaMult now reads from AreaRegistry.GetMultiplier() — the authoritative source.
---      AdminConfig.AreaValueMultipliers is no longer used here.
+
 local Players             = game:GetService("Players")
 local ReplicatedStorage   = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
@@ -600,13 +599,30 @@ local UpdateHatchery = ReplicatedStorage.RemoteEvents:WaitForChild("UpdateHatche
 local UpdateHUD      = ReplicatedStorage.RemoteEvents:WaitForChild("UpdateHUD")
 local HabitatFull    = ReplicatedStorage.RemoteEvents:WaitForChild("HabitatFull")
 local CubeMutated    = ReplicatedStorage.RemoteEvents:WaitForChild("CubeMutated")
+local CubeSmushed    = ReplicatedStorage.RemoteEvents:WaitForChild("CubeSmushed") -- ✨ NEW!
 
-local HABITAT_PART = workspace:WaitForChild("Habitat").Position
+local HABITAT_HOLDER = workspace:WaitForChild("HabitatHolder")
+local HABITAT_PART   = HABITAT_HOLDER:WaitForChild("Position")
+local AURA_HOLDER    = workspace:WaitForChild("AuraHolder") -- ✨ NEW!
 
 local lastFire          = {}
 local holdStart         = {}
 local hatchery          = {}
 local clickSessionStart = {}
+
+-- Helper to safely retrieve the current area's defined aura models
+local function GetAreaAuraModels(areaId)
+	local config = nil
+	if type(AreaRegistry.GetArea) == "function" then
+		config = AreaRegistry.GetArea(areaId)
+	elseif type(AreaRegistry.GetAreaConfig) == "function" then
+		config = AreaRegistry.GetAreaConfig(areaId)
+	elseif AreaRegistry.Areas then
+		config = AreaRegistry.Areas[areaId]
+	end
+	return config and config.auraModels or nil
+end
+
 local function GetHatcheryMax(data)
 	local cfg = UpgradeConfig.GetUpgradeConfig("hatcheryCapacity")
 	return (cfg and cfg.apply) and cfg.apply(data) or AdminConfig.HatcheryMax
@@ -626,6 +642,7 @@ Players.PlayerAdded:Connect(function(p)
 	hatchery[p.UserId] = AdminConfig.HatcheryMax
 	clickSessionStart[p.UserId] = nil
 end)
+
 Players.PlayerRemoving:Connect(function(p)
 	hatchery[p.UserId]=nil; holdStart[p.UserId]=nil
 	lastFire[p.UserId]=nil; clickSessionStart[p.UserId]=nil
@@ -643,6 +660,7 @@ task.spawn(function()
 	end
 end)
 
+-- Continuous Hatchery Tick Thread
 task.spawn(function()
 	while true do
 		task.wait(0.1)
@@ -651,14 +669,17 @@ task.spawn(function()
 			local data = GameManager.GetData(uid)
 			local hatchMax = data and GetHatcheryMax(data) or AdminConfig.HatcheryMax
 			local prev = hatchery[uid] or hatchMax
+
 			if holdStart[uid] then
 				hatchery[uid] = math.max(0, prev - AdminConfig.HatcheryDrainRate * 0.1)
 			else
 				hatchery[uid] = math.min(hatchMax, prev + AdminConfig.HatcheryRefillRate * 0.1)
 			end
+
 			if hatchery[uid] ~= prev then
 				UpdateHatchery:FireClient(player, { current=hatchery[uid], max=hatchMax })
 			end
+
 			if hatchery[uid] <= 0 and holdStart[uid] then
 				holdStart[uid] = nil
 				ReplicatedStorage.RemoteEvents.ForceStopHold:FireClient(player)
@@ -681,14 +702,16 @@ local function SendHUDUpdate(player)
 	local data = GameManager.GetData(uid)
 	local runtime = GameManager.GetRuntime(uid)
 	if not data or not runtime then return end
+
 	local totalMV = runtime.totalMutatedValue or 0
 	local pending = runtime.cubeCount
 	local avgVal  = pending > 0 and (totalMV/pending) or AdminConfig.BaseAuraValue
 	local rate    = math.floor(pending * avgVal)
 	local passTickCfg = UpgradeConfig.GetUpgradeConfig("passiveTickSpeed")
-	
+
 	local passInt = (passTickCfg and passTickCfg.apply) and passTickCfg.apply(data) or AdminConfig.PassiveInterval
 	local displayRate = math.floor(rate * BoostManager.GetValueMultiplier(uid) * BoostManager.GetSpawnRateMultiplier(uid))
+
 	UpdateHUD:FireClient(player, {
 		currency=data.currency, pendingAuras=pending,
 		habitatCapacity=GetHabitatCapacity(data), rate=displayRate,
@@ -702,10 +725,12 @@ local function SendHUDUpdate(player)
 	})
 end
 
+-- Continuous Mutation Tick Thread
 task.spawn(function()
 	while true do
 		local tickInterval = AdminConfig.MutationTickInterval or MutationConfig.CheckInterval
 		task.wait(tickInterval)
+
 		for _, player in ipairs(Players:GetPlayers()) do
 			local uid = player.UserId
 			local data = GameManager.GetData(uid)
@@ -713,12 +738,12 @@ task.spawn(function()
 			if not data or not runtime then continue end
 
 			local dt = tickInterval * GetAFKSpeed(runtime) * GetMutationSpeedMult(data) * (AdminConfig.MutationSpeedMultiplier or 1)
-
-			-- 1. Initialize our batch for this specific tick
 			local mutationBatch = {}
 
+			local currentArea = data.currentArea or 1
+			local areaModels = GetAreaAuraModels(currentArea)
+
 			for cubeId, cube in pairs(runtime.cubes) do
-				-- 2. Store the value before any mutations happen
 				local oldMutatedValue = MutationConfig.GetMutatedValue(cube)
 				local mutated = false
 
@@ -730,7 +755,6 @@ task.spawn(function()
 				if nl > pl then
 					mutated = true
 					local be = MutationConfig.ValueBonuses[nl]
-					-- Add to batch instead of firing immediately
 					table.insert(mutationBatch, { 
 						cubeId = cubeId, 
 						mutationType = "valueBonus",
@@ -743,6 +767,13 @@ task.spawn(function()
 				local upgrades = 0
 
 				while cube.tierIndex < maxTier and cube.tierIndex < #TierConfig.Tiers and upgrades < 5 do
+					if areaModels then
+						local nextTierName = TierConfig.Tiers[cube.tierIndex + 1].name
+						if not areaModels[nextTierName] then
+							break 
+						end
+					end
+
 					local timeSince = cube.effectiveElapsed - (cube.lastUpgradeElapsed or 0)
 					local bestChance, bestTime = 0, 0
 
@@ -768,13 +799,13 @@ task.spawn(function()
 						upgrades += 1
 						mutated = true
 
-						-- Add to batch instead of firing immediately
 						table.insert(mutationBatch, { 
 							cubeId = cubeId, 
 							mutationType = "tierUpgrade",
 							newColor = newTier.color, 
 							newGlow = newTier.glow, 
-							tierName = newTier.name 
+							tierName = newTier.name,
+							currentArea = currentArea
 						})
 
 						if newTier.name == "Legendary" then
@@ -785,18 +816,15 @@ task.spawn(function()
 					end
 				end
 
-				-- 3. Calculate the delta and apply it to the running total
 				if mutated then
 					local newMutatedValue = MutationConfig.GetMutatedValue(cube)
 					runtime.totalMutatedValue = (runtime.totalMutatedValue or 0) + (newMutatedValue - oldMutatedValue)
 				end
 			end
 
-			-- 4. Send the entire batch in ONE RemoteEvent
 			if #mutationBatch > 0 then
 				ReplicatedStorage.RemoteEvents.CubeMutatedBatch:FireClient(player, mutationBatch)
 			end
-
 			SendHUDUpdate(player)
 		end
 	end
@@ -804,13 +832,10 @@ end)
 
 local function GetHoldMultiplier(holdTime, data)
 	local upgrades = data and data.upgrades or {}
-
-	-- Extract speed level
 	local speedData = upgrades["multiplierSpeed"]
 	local speedLevel = (typeof(speedData) == "table" and speedData.level) or (typeof(speedData) == "number" and speedData) or 0
 	local playerMultSpeed = 1.0 + (speedLevel * 0.05)
 
-	-- Extract Mythic Unlock (Tier 6)
 	local playerMaxTier = 5
 	local mythicData = upgrades["unlockMythicMult"]
 	local mythicLevel = (typeof(mythicData) == "table" and mythicData.level) or (typeof(mythicData) == "number" and mythicData) or 0
@@ -825,7 +850,6 @@ local function GetHoldMultiplier(holdTime, data)
 		end
 	end
 
-	-- Smooth Math to perfectly match the client
 	local nextTier = math.min(currentTier + 1, playerMaxTier)
 	if currentTier == playerMaxTier then
 		return AdminConfig.MilestoneData[currentTier].mult, AdminConfig.MilestoneData[currentTier].luck
@@ -848,11 +872,14 @@ local function RollWithLuck(luckBonus)
 	for _, tier in ipairs(tiers) do
 		local chance = tier.chance
 		if tier.name ~= "Common" then chance += luckBonus/(#tiers-1) end
-		table.insert(adjusted, { tier=tier, chance=chance }); total += chance
+		table.insert(adjusted, { tier=tier, chance=chance })
+		total += chance
 	end
-	local r, cum = math.random()*total, 0
+
+	local r, cum = math.random() * total, 0
 	for _, e in ipairs(adjusted) do
-		cum += e.chance; if r <= cum then return e.tier end
+		cum += e.chance
+		if r <= cum then return e.tier end
 	end
 	return tiers[1]
 end
@@ -863,8 +890,21 @@ local function SpawnAura(player, data, runtime, holdMult, luckBonus)
 	local tierIndex = 1
 	for i, t in ipairs(TierConfig.Tiers) do if t.name == tier.name then tierIndex=i; break end end
 
-	-- ✨ THE ADDITIVE MATH FIX: Gather ALL Value Upgrades!
-	local totalValueMultiplier = 1.0 -- Starts at 100% base value
+	local currentArea = data.currentArea or 1
+	local areaModels = GetAreaAuraModels(currentArea)
+
+	if areaModels then
+		while tierIndex > 1 do
+			local checkName = TierConfig.Tiers[tierIndex].name
+			if areaModels[checkName] then
+				break
+			end
+			tierIndex -= 1
+		end
+		tier = TierConfig.Tiers[tierIndex] 
+	end
+
+	local totalValueMultiplier = 1.0 
 	local valueUpgrades = {
 		"blockValue", "blockValueT2", "auraValueT3", 
 		"auraValueT4", "auraValueT6", "auraValueT8", "auraValueT10"
@@ -872,9 +912,7 @@ local function SpawnAura(player, data, runtime, holdMult, luckBonus)
 
 	for _, upgradeId in ipairs(valueUpgrades) do
 		local cfg = UpgradeConfig.GetUpgradeConfig(upgradeId)
-		if cfg and cfg.apply then
-			totalValueMultiplier += cfg.apply(data) -- Additively stack the percentages!
-		end
+		if cfg and cfg.apply then totalValueMultiplier += cfg.apply(data) end
 	end
 
 	local prestigeMult    = PrestigeModule.GetMultiplier(data.soulAuras)
@@ -882,16 +920,26 @@ local function SpawnAura(player, data, runtime, holdMult, luckBonus)
 	local boostValueMult  = BoostManager.GetValueMultiplier(uid)
 	local _, weatherValueMult = WeatherManager.GetMultipliers(uid)
 
-	-- Apply the strictly additive totalValueMultiplier
-	local baseValue  = math.floor(AdminConfig.BaseAuraValue * tier.multiplier * totalValueMultiplier * prestigeMult * areaMult * boostValueMult * weatherValueMult)
+	local calcMultFloat = totalValueMultiplier * prestigeMult * areaMult * boostValueMult * weatherValueMult
+	local baseValue = math.floor(AdminConfig.BaseAuraValue * tier.multiplier * calcMultFloat)
 	local totalValue = baseValue + math.floor(baseValue * (holdMult - 1))
 
+	-- ✨ NEW: Search for the dynamic AuraSpawnPoint set up in the active area
 	local spawnPos = HABITAT_PART.Position + Vector3.new(math.random(-3,3), 10, math.random(-3,3))
+	local activeAuraModel = AURA_HOLDER:FindFirstChildWhichIsA("Model")
+	if activeAuraModel then
+		local spawnPoint = activeAuraModel:FindFirstChild("AuraSpawnPoint", true)
+		if spawnPoint then
+			spawnPos = spawnPoint.Position + Vector3.new(math.random(-2,2), 0, math.random(-2,2))
+		end
+	end
+
 	local cubeRecord = {
 		spawnTime=tick(), effectiveElapsed=0, lastUpgradeElapsed=0,
 		baseValue=totalValue, tierIndex=tierIndex,
 		tierName=tier.name, color=tier.color, glow=tier.glow,
 	}
+
 	if AdminConfig.MutationInstantMax then
 		local mb = MutationConfig.ValueBonuses[#MutationConfig.ValueBonuses]
 		if mb then cubeRecord.effectiveElapsed = mb.time + 1 end
@@ -899,6 +947,7 @@ local function SpawnAura(player, data, runtime, holdMult, luckBonus)
 
 	local cubeId = GameManager.AddCube(uid, cubeRecord)
 	if not cubeId then return end
+
 	data.totalCubesProduced = (data.totalCubesProduced or 0) + 1
 	if tier.name == "Legendary" then data.totalLegendaryCubes = (data.totalLegendaryCubes or 0) + 1 end
 	runtime.lastActiveTime = tick()
@@ -906,24 +955,50 @@ local function SpawnAura(player, data, runtime, holdMult, luckBonus)
 	AuraSpawned:FireClient(player, {
 		cubeId=cubeId, tier=tier.name, color=tier.color,
 		glow=tier.glow, value=totalValue, spawnPos=spawnPos,
+		currentArea = currentArea 
 	})
 end
 
 ProduceAura.OnServerEvent:Connect(function(player, action)
 	local uid = player.UserId
 	local now = tick()
-	if action == "start" then if (hatchery[uid] or 0) > 0 then holdStart[uid]=now end; return end
-	if action == "stop"  then holdStart[uid]=nil; return end
-	if (hatchery[uid] or 0) <= 0 then return end
+	local data    = GameManager.GetData(uid)
+	local runtime = GameManager.GetRuntime(uid)
+
+	if action == "start" then 
+		if data and runtime and runtime.cubeCount >= GetHabitatCapacity(data) then
+			HabitatFull:FireClient(player)
+			return
+		end
+		if (hatchery[uid] or 0) > 0.5 then 
+			holdStart[uid] = now 
+		else
+			UpdateHatchery:FireClient(player, { current = 0, max = data and GetHatcheryMax(data) or AdminConfig.HatcheryMax })
+		end
+		return 
+	end
+
+	if action == "stop" then 
+		holdStart[uid] = nil; return 
+	end
+
+	if not data or not runtime then return end
+	if runtime.cubeCount >= GetHabitatCapacity(data) then HabitatFull:FireClient(player); return end
+	if (hatchery[uid] or 0) <= 0.5 then 
+		UpdateHatchery:FireClient(player, { current = 0, max = data and GetHatcheryMax(data) or AdminConfig.HatcheryMax })
+		return 
+	end
 	if not holdStart[uid] then return end
 
 	local rushMult = BoostManager.GetSpawnRateMultiplier(uid)
 	local weatherSpawnMult, _ = WeatherManager.GetMultipliers(uid)
 	local effectiveFireRate = AdminConfig.FireRate / (rushMult * weatherSpawnMult)
+
 	if lastFire[uid] then
 		local timeSinceLast = now - lastFire[uid]
 		if timeSinceLast > 3 then clickSessionStart[uid] = now end
 		if not clickSessionStart[uid] then clickSessionStart[uid] = now end
+
 		local sessionLength = now - clickSessionStart[uid]
 		if sessionLength > 300 then effectiveFireRate *= 2 end
 		if sessionLength > 600 then effectiveFireRate *= 4 end
@@ -931,12 +1006,8 @@ ProduceAura.OnServerEvent:Connect(function(player, action)
 	else
 		clickSessionStart[uid] = now
 	end
-	lastFire[uid] = now
 
-	local data    = GameManager.GetData(uid)
-	local runtime = GameManager.GetRuntime(uid)
-	if not data or not runtime then return end
-	if runtime.cubeCount >= GetHabitatCapacity(data) then HabitatFull:FireClient(player); return end
+	lastFire[uid] = now
 
 	local holdTime = now - holdStart[uid]
 	local holdMult, luckBonus = GetHoldMultiplier(holdTime, data)
@@ -945,7 +1016,29 @@ ProduceAura.OnServerEvent:Connect(function(player, action)
 	UpdateHatchery:FireClient(player, { current=hatchery[uid], max=GetHatcheryMax(data) })
 end)
 
-EpicUpgradeManager:
+-- ✨ NEW: Listen for Auras that got pushed into the Smush Zone!
+CubeSmushed.OnServerEvent:Connect(function(player, cubeId)
+	local uid = player.UserId
+	local runtime = GameManager.GetRuntime(uid)
+
+	if runtime and runtime.cubes[cubeId] then
+		-- Delete the cube from the player's pending cache
+		local cubeData = runtime.cubes[cubeId]
+		local mutatedValue = MutationConfig.GetMutatedValue(cubeData)
+
+		runtime.cubes[cubeId] = nil
+		runtime.cubeCount = math.max(0, runtime.cubeCount - 1)
+		runtime.totalMutatedValue = math.max(0, runtime.totalMutatedValue - mutatedValue)
+
+		-- Update their HUD instantly so they see their passive income drop
+		SendHUDUpdate(player)
+
+		-- Also update their hatchery bar since we freed up 1 space
+		local data = GameManager.GetData(uid)
+		UpdateHatchery:FireClient(player, { current = hatchery[uid], max = GetHatcheryMax(data) })
+	end
+end)
+
 -- EpicUpgradeManager
 -- Location: ServerScriptService > EpicUpgradeManager
 --
@@ -1028,10 +1121,8 @@ end
 function EpicUpgradeManager.ResendState(player) SendFullState(player) end
 return EpicUpgradeManager
 
-MailManager:
 -- MailManager
 -- Location: ServerScriptService > MailManager
--- FIX: Increased join delay + retry + catch already-joined players
 
 local Players             = game:GetService("Players")
 local ReplicatedStorage   = game:GetService("ReplicatedStorage")
@@ -1043,6 +1134,7 @@ local GameManager = require(ServerScriptService.GameManager)
 local ClaimMail   = ReplicatedStorage.RemoteEvents:WaitForChild("ClaimMail")
 local MailUpdated = ReplicatedStorage.RemoteEvents:WaitForChild("MailUpdated")
 local UpdateHUD   = ReplicatedStorage.RemoteEvents:WaitForChild("UpdateHUD")
+local ShipAuras   = ReplicatedStorage.RemoteEvents:WaitForChild("ShipAuras")
 
 local function IsMailAvailable(entry, data)
 	if not data then return false end
@@ -1128,14 +1220,23 @@ ClaimMail.OnServerEvent:Connect(function(player, mailId)
 	if not IsMailAvailable(entry, data) then return end
 	data.claimedMail[mailId] = true
 	local rewards = entry.rewards or {}
-	if rewards.goldenAuras then data.goldenAuras = (data.goldenAuras or 0) + rewards.goldenAuras end
-	if rewards.currency then data.currency = (data.currency or 0) + rewards.currency end
+
+	if rewards.goldenAuras and rewards.goldenAuras > 0 then
+		data.goldenAuras = (data.goldenAuras or 0) + rewards.goldenAuras
+		ShipAuras:FireClient(player, {action = "playJuice", amount = rewards.goldenAuras, currencyType = "Auras"})
+	end
+	if rewards.currency and rewards.currency > 0 then
+		data.currency = (data.currency or 0) + rewards.currency
+		ShipAuras:FireClient(player, {action = "playJuice", amount = rewards.currency, currencyType = "Currency"})
+	end
+
 	if rewards.boosts and type(rewards.boosts) == "table" then
 		if not data.boostInventory then data.boostInventory = {} end
 		for boostId, count in pairs(rewards.boosts) do
 			data.boostInventory[boostId] = (data.boostInventory[boostId] or 0) + count
 		end
 	end
+
 	UpdateHUD:FireClient(player, {
 		goldenAuras    = data.goldenAuras,
 		currency       = data.currency,
@@ -1153,7 +1254,6 @@ task.spawn(function()
 	end
 end)
 
--- FIX: On join — longer delay + retry + catch already-joined
 Players.PlayerAdded:Connect(function(player)
 	task.wait(4)
 	SendMailState(player)
@@ -1161,7 +1261,6 @@ Players.PlayerAdded:Connect(function(player)
 	if player and player.Parent then SendMailState(player) end
 end)
 
--- FIX: Catch players already in game (Studio race condition)
 task.delay(6, function()
 	for _, player in ipairs(Players:GetPlayers()) do SendMailState(player) end
 end)
@@ -1182,24 +1281,33 @@ function MailManager.FlagGiftCollected(player)
 end
 return MailManager
 
-PassiveIncome:
 -- PassiveIncome
 -- Location: ServerScriptService > PassiveIncome
--- CHANGE: farmEvaluation now included in UpdateHUD payload so client
---         gets the real value on every passive tick without waiting for AreaUpdated.
-local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Players             = game:GetService("Players")
+local ReplicatedStorage   = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 
-local AdminConfig = require(ReplicatedStorage.Modules.AdminConfig)
-local UpgradeConfig = require(ReplicatedStorage.Modules.UpgradeConfig)
-local MutationConfig = require(ReplicatedStorage.Modules.MutationConfig)
-local GameManager = require(ServerScriptService.GameManager)
+local AdminConfig    = require(ReplicatedStorage.Modules.AdminConfig)
+local UpgradeConfig  = require(ReplicatedStorage.Modules.UpgradeConfig)
+local GameManager    = require(ServerScriptService.GameManager)
+local BoostManager   = require(ServerScriptService.BoostManager)
+local UpdateHUD      = ReplicatedStorage.RemoteEvents:WaitForChild("UpdateHUD")
 
-local UpdateHUD = ReplicatedStorage.RemoteEvents:WaitForChild("UpdateHUD")
-
-if script:GetAttribute("Running") then script:Destroy() return end
+if script:GetAttribute("Running") then script:Destroy(); return end
 script:SetAttribute("Running", true)
+
+local RemoteEvents   = ReplicatedStorage:WaitForChild("RemoteEvents")
+local TutorialFreeze = RemoteEvents:FindFirstChild("TutorialFreeze")
+if not TutorialFreeze then
+	TutorialFreeze      = Instance.new("RemoteEvent")
+	TutorialFreeze.Name = "TutorialFreeze"
+	TutorialFreeze.Parent = RemoteEvents
+end
+
+TutorialFreeze.OnServerEvent:Connect(function(player, isFrozen)
+	player:SetAttribute("TutorialFrozen", isFrozen)
+end)
 
 local function GetPassiveInterval(data)
 	local cfg = UpgradeConfig.GetUpgradeConfig("passiveTickSpeed")
@@ -1213,17 +1321,27 @@ local function GetHabitatCapacity(data)
 	return AdminConfig.BaseHabitatCapacity
 end
 
-local playerTimers = {}
+local playerTimers       = {}  
+local lastSentCurrency   = {}  
 
-Players.PlayerAdded:Connect(function(p) playerTimers[p.UserId] = 0 end)
-Players.PlayerRemoving:Connect(function(p) playerTimers[p.UserId] = nil end)
+Players.PlayerAdded:Connect(function(p)
+	playerTimers[p.UserId]     = 0
+	lastSentCurrency[p.UserId] = 0
+end)
+
+Players.PlayerRemoving:Connect(function(p)
+	playerTimers[p.UserId]     = nil
+	lastSentCurrency[p.UserId] = nil
+end)
 
 while true do
 	task.wait(0.5)
+
 	for _, player in ipairs(Players:GetPlayers()) do
 		if player:GetAttribute("TutorialFrozen") then continue end
-		local uid = player.UserId
-		local data = GameManager.GetData(uid)
+
+		local uid     = player.UserId
+		local data    = GameManager.GetData(uid)
 		local runtime = GameManager.GetRuntime(uid)
 		if not data or not runtime then continue end
 		if runtime.cubeCount <= 0 then continue end
@@ -1234,51 +1352,38 @@ while true do
 		if playerTimers[uid] >= interval then
 			playerTimers[uid] = 0
 
-			-- No more looping! Instant O(1) lookup.
 			local totalMutatedValue = runtime.totalMutatedValue
-
-			local passiveEarned = math.floor(totalMutatedValue)
+			local boostMult         = BoostManager.GetValueMultiplier(uid) * BoostManager.GetSpawnRateMultiplier(uid)
+			local passiveEarned     = math.floor(totalMutatedValue * boostMult)
 			if passiveEarned <= 0 then continue end
 
-			data.currency       = (data.currency or 0)       + passiveEarned
-			data.totalEarned    = (data.totalEarned or 0)    + passiveEarned
-			data.farmEvaluation = (data.farmEvaluation or 0) + passiveEarned
+			data.currency       = (data.currency       or 0) + passiveEarned
+			data.totalEarned    = (data.totalEarned     or 0) + passiveEarned
+			data.farmEvaluation = (data.farmEvaluation  or 0) + passiveEarned
 
-			local habitatCap = GetHabitatCapacity(data)
-			local pending = runtime.cubeCount
-			local avgValue = pending > 0 and (totalMutatedValue / pending) or AdminConfig.BaseAuraValue
-			local rate = math.floor(pending * avgValue)
+			if data.currency ~= lastSentCurrency[uid] then
+				lastSentCurrency[uid] = data.currency
 
-			UpdateHUD:FireClient(player, {
-				currency        = data.currency,
-				pendingAuras    = pending,
-				habitatCapacity = habitatCap,
-				rate            = rate,
-				passiveInterval = interval,
-				totalEarned     = data.totalEarned     or 0,
-				soulAuras       = data.soulAuras       or 0,
-				farmEvaluation  = data.farmEvaluation  or 0,  -- ADDED
-			})
+				local habitatCap = GetHabitatCapacity(data)
+				local pending    = runtime.cubeCount
+				local avgValue   = pending > 0 and (totalMutatedValue / pending) or AdminConfig.BaseAuraValue
+				local rate       = math.floor(pending * avgValue * boostMult)
+
+				UpdateHUD:FireClient(player, {
+					currency        = data.currency,
+					pendingAuras    = pending,
+					habitatCapacity = habitatCap,
+					rate            = rate,
+					passiveInterval = interval,
+					totalEarned     = data.totalEarned    or 0,
+					soulAuras       = data.soulAuras      or 0,
+					farmEvaluation  = data.farmEvaluation or 0,
+				})
+			end
 		end
 	end
 end
 
--- Put this at the very bottom of ServerScriptService > PassiveIncome
-local RemoteEvents = game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents")
-local TutorialFreeze = RemoteEvents:FindFirstChild("TutorialFreeze")
-
--- If the event doesn't exist yet, create it automatically!
-if not TutorialFreeze then
-	TutorialFreeze = Instance.new("RemoteEvent")
-	TutorialFreeze.Name = "TutorialFreeze"
-	TutorialFreeze.Parent = RemoteEvents
-end
-
-TutorialFreeze.OnServerEvent:Connect(function(player, isFrozen)
-	player:SetAttribute("TutorialFrozen", isFrozen)
-end)
-
-PrestigeHandler:
 -- PrestigeHandler
 -- Location: ServerScriptService > PrestigeHandler
 --
@@ -1451,59 +1556,71 @@ PreviewPrestige.OnServerEvent:Connect(function(player)
 	})
 end)
 
-ShippingManager:
 -- ShippingManager
 -- Location: ServerScriptService > ShippingManager
-local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local ServerScriptService = game:GetService("ServerScriptService")
-local HttpService = game:GetService("HttpService")
 
-local AdminConfig = require(ReplicatedStorage.Modules.AdminConfig)
-local UpgradeConfig = require(ReplicatedStorage.Modules.UpgradeConfig)
-local MutationConfig = require(ReplicatedStorage.Modules.MutationConfig)
-local GameManager = require(ServerScriptService.GameManager)
+local Players             = game:GetService("Players")
+local ReplicatedStorage   = game:GetService("ReplicatedStorage")
+local ServerScriptService = game:GetService("ServerScriptService")
+local HttpService         = game:GetService("HttpService")
+
+local AdminConfig      = require(ReplicatedStorage.Modules.AdminConfig)
+local UpgradeConfig    = require(ReplicatedStorage.Modules.UpgradeConfig)
+local MutationConfig   = require(ReplicatedStorage.Modules.MutationConfig)
+local GameManager      = require(ServerScriptService.GameManager)
+local EpicUpgradeConfig = require(ReplicatedStorage.Modules.EpicUpgradeConfig)
 
 local ShipAuras = ReplicatedStorage.RemoteEvents:WaitForChild("ShipAuras")
 local UpdateHUD = ReplicatedStorage.RemoteEvents:WaitForChild("UpdateHUD")
 
-local playerTimers = {}
-local activeTrucks = {}
+local playerTimers   = {}
+local activeTrucks   = {}
 local playerAutoMode = {}
-local pendingPayouts = {} -- SECURE PAYOUT STORAGE: [uid] = { [dispatchId] = amount }
+local pendingPayouts = {}
 
+-- ─────────────────────────────────────────────────────────────────────────────
+-- PLAYER LIFECYCLE
+-- ─────────────────────────────────────────────────────────────────────────────
 Players.PlayerAdded:Connect(function(player)
-	playerTimers[player.UserId] = AdminConfig.ShipInterval
-	activeTrucks[player.UserId] = 0
+	playerTimers[player.UserId]   = AdminConfig.ShipInterval
+	activeTrucks[player.UserId]   = 0
 	playerAutoMode[player.UserId] = AdminConfig.AutoDispatch
 	pendingPayouts[player.UserId] = {}
 end)
 
 Players.PlayerRemoving:Connect(function(player)
-	playerTimers[player.UserId] = nil
-	activeTrucks[player.UserId] = nil
+	playerTimers[player.UserId]   = nil
+	activeTrucks[player.UserId]   = nil
 	playerAutoMode[player.UserId] = nil
 	pendingPayouts[player.UserId] = nil
 end)
 
+-- ─────────────────────────────────────────────────────────────────────────────
+-- HUD UPDATE HELPER
+-- ─────────────────────────────────────────────────────────────────────────────
 local function SendHUDUpdate(player)
-	local uid = player.UserId
-	local data = GameManager.GetData(uid)
+	local uid     = player.UserId
+	local data    = GameManager.GetData(uid)
 	local runtime = GameManager.GetRuntime(uid)
 	if not data or not runtime then return end
 
-	-- No more looping! Instant O(1) lookup.
 	local totalMutatedValue = runtime.totalMutatedValue
+	local pending           = runtime.cubeCount
+	local avgValue          = pending > 0 and (totalMutatedValue / pending) or AdminConfig.BaseAuraValue
+	local rate              = math.floor(pending * avgValue)
 
-	local pending = runtime.cubeCount
-	local avgValue = pending > 0 and (totalMutatedValue / pending) or AdminConfig.BaseAuraValue
-	local rate = math.floor(pending * avgValue)
+	local habCfg      = UpgradeConfig.GetUpgradeConfig("habitatCapacity")
+	local habitatCap  = (habCfg and habCfg.apply) and habCfg.apply(data) or AdminConfig.BaseHabitatCapacity
 
-	local habCfg = UpgradeConfig.GetUpgradeConfig("habitatCapacity")
-	local habitatCap = (habCfg and habCfg.apply) and habCfg.apply(data) or AdminConfig.BaseHabitatCapacity
-
-	local tickCfg = UpgradeConfig.GetUpgradeConfig("passiveTickSpeed")
+	local tickCfg    = UpgradeConfig.GetUpgradeConfig("passiveTickSpeed")
 	local passiveInt = (tickCfg and tickCfg.apply) and tickCfg.apply(data) or AdminConfig.PassiveInterval
+
+	local shipReduction = 0
+	local shipCfg = EpicUpgradeConfig.GetUpgradeConfig("epicShipCooldown")
+	if shipCfg and shipCfg.apply then
+		shipReduction = shipCfg.apply(data)
+	end
+	local finalCooldown = math.max(1, AdminConfig.ShipInterval - shipReduction)
 
 	UpdateHUD:FireClient(player, {
 		currency        = data.currency,
@@ -1514,23 +1631,27 @@ local function SendHUDUpdate(player)
 		totalEarned     = data.totalEarned    or 0,
 		soulAuras       = data.soulAuras      or 0,
 		farmEvaluation  = data.farmEvaluation or 0,
+		shipCooldown    = finalCooldown,
 	})
 end
 
+-- ─────────────────────────────────────────────────────────────────────────────
+-- DISPATCH
+-- ─────────────────────────────────────────────────────────────────────────────
 local function TryDispatch(player)
 	if AdminConfig.DisableShipping then return end
-	local uid = player.UserId
-	local data = GameManager.GetData(uid)
+	local uid     = player.UserId
+	local data    = GameManager.GetData(uid)
 	local runtime = GameManager.GetRuntime(uid)
 	if not data or not runtime then return end
-	if (activeTrucks[uid] or 0) >= AdminConfig.MaxTrucks then return end
+	if (activeTrucks[uid] or 0) >= 50 then return end
 
 	local totalCubes = runtime.cubeCount
 	if totalCubes <= 0 then return end
 
-	local toCollect = math.min(totalCubes, AdminConfig.PlatformCapacity)
+	local toCollect  = math.min(totalCubes, AdminConfig.PlatformCapacity)
 	local cubeIds, cubes = GameManager.CollectOldestCubes(uid, toCollect)
-	local collected = #cubeIds
+	local collected  = #cubeIds
 	if collected == 0 then return end
 
 	local totalPayout = 0
@@ -1541,7 +1662,6 @@ local function TryDispatch(player)
 	activeTrucks[uid] = (activeTrucks[uid] or 0) + 1
 	data.totalPlatformsShipped = (data.totalPlatformsShipped or 0) + 1
 
-	-- SECURE ID GENERATION
 	local dispatchId = HttpService:GenerateGUID(false)
 	pendingPayouts[uid][dispatchId] = totalPayout
 
@@ -1550,68 +1670,64 @@ local function TryDispatch(player)
 	ShipAuras:FireClient(player, {
 		collected  = collected,
 		payout     = totalPayout,
-		dispatchId = dispatchId -- Send ID to client instead of trusting it later
+		dispatchId = dispatchId,
 	})
 end
 
-task.spawn(function()
-	while true do
-		task.wait(1)
-		for _, player in ipairs(Players:GetPlayers()) do
-			if player:GetAttribute("TutorialFrozen") then continue end
-			local uid = player.UserId
-			if not playerAutoMode[uid] then continue end
-			playerTimers[uid] = (playerTimers[uid] or AdminConfig.ShipInterval) - 1
-			if playerTimers[uid] <= 0 then
-				playerTimers[uid] = AdminConfig.ShipInterval
-				TryDispatch(player)
-			end
-		end
-	end
-end)
-
+-- ─────────────────────────────────────────────────────────────────────────────
+-- SERVER EVENT
+-- ─────────────────────────────────────────────────────────────────────────────
 ShipAuras.OnServerEvent:Connect(function(player, action, value)
 	local uid = player.UserId
 
 	if action == "manual" then
 		TryDispatch(player)
+
+		local data          = GameManager.GetData(uid)
+		local shipReduction = 0
+		if data then
+			local shipCfg = EpicUpgradeConfig.GetUpgradeConfig("epicShipCooldown")
+			if shipCfg and shipCfg.apply then shipReduction = shipCfg.apply(data) end
+		end
+		playerTimers[uid] = math.max(1, AdminConfig.ShipInterval - shipReduction)
 		return
 	end
 
 	if action == "setMode" then
 		playerAutoMode[uid] = (value == "auto")
-		if value == "auto" then
-			playerTimers[uid] = AdminConfig.ShipInterval
-		end
 		return
 	end
 
 	if action == "payout" then
 		if player:GetAttribute("TutorialFrozen") then return end
+
 		local data = GameManager.GetData(uid)
 		if not data then return end
 
-		-- SECURITY CHECK: value is now the dispatchId, NOT the money amount
-		local dispatchId = value
+		local dispatchId   = value
 		local actualPayout = pendingPayouts[uid] and pendingPayouts[uid][dispatchId]
 
-		if not actualPayout then 
-			warn("[Security] Player " .. player.Name .. " attempted invalid platform payout.")
-			return 
+		if not actualPayout then
+			warn("[Security] " .. player.Name .. " attempted invalid platform payout.")
+			return
 		end
 
-		-- Clear the memory so it can't be fired twice
 		pendingPayouts[uid][dispatchId] = nil
-
 		activeTrucks[uid] = math.max(0, (activeTrucks[uid] or 1) - 1)
-		data.currency       = (data.currency or 0)       + actualPayout
-		data.totalEarned    = (data.totalEarned or 0)    + actualPayout
-		data.farmEvaluation = (data.farmEvaluation or 0) + actualPayout
+
+		data.currency       = (data.currency       or 0) + actualPayout
+		data.totalEarned    = (data.totalEarned     or 0) + actualPayout
+		data.farmEvaluation = (data.farmEvaluation  or 0) + actualPayout
 
 		SendHUDUpdate(player)
+
+		ShipAuras:FireClient(player, {
+			action = "payoutConfirmed",
+			amount = actualPayout
+		})
 	end
 end)
-UpgradeManager:
+
 
 -- UpgradeManager
 -- Location: ServerScriptService > UpgradeManager
@@ -1693,7 +1809,13 @@ local function SendHUDAfterPurchase(player, data)
 	local avgValue = pending > 0 and (totalMutatedValue / pending) or AdminConfig.BaseAuraValue
 	local rate     = math.floor(pending * avgValue)
 
-	-- FIXED: farmEvaluation now included — Stats panel was going stale after purchases
+	-- ✨ FIX: Build upgrades table for ClickHandler tier unlock checks
+	local upgradesState = {}
+	for upgradeId, level in pairs(data.upgrades or {}) do
+		upgradesState[upgradeId] = { level = level }
+	end
+
+	-- FIXED: farmEvaluation and upgrades now included
 	UpdateHUD:FireClient(player, {
 		currency        = data.currency,
 		pendingAuras    = pending,
@@ -1702,7 +1824,8 @@ local function SendHUDAfterPurchase(player, data)
 		passiveInterval = GetPassiveInterval(data),
 		totalEarned     = data.totalEarned    or 0,
 		soulAuras       = data.soulAuras      or 0,
-		farmEvaluation  = data.farmEvaluation or 0,  -- FIXED: was missing
+		farmEvaluation  = data.farmEvaluation or 0,
+		upgrades        = upgradesState,  -- ✨ FIX: was missing - needed for tier unlocks!
 	})
 end
 
@@ -1744,7 +1867,7 @@ PurchaseUpgrade.OnServerEvent:Connect(function(player, upgradeId)
 
 	local nextCost = 0
 	if newLevel < cfg.maxLevel then
-		nextCost = UpgradeConfig.CalculateCost(upgradeId, currentLevel)
+		nextCost = UpgradeConfig.CalculateCost(upgradeId, newLevel)
 	end
 
 	UpgradeUpdated:FireClient(player, {
@@ -1764,125 +1887,6 @@ Players.PlayerRemoving:Connect(function(player)
 	lastPurchase[player.UserId] = nil
 end)
 
-WeatherController:
--- WeatherController
--- Location: ServerScriptService > WeatherController
--- Purpose: Runs a continuous Day/Night cycle, with random chances to spawn overlapping Weather Events.
-
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local RunService = game:GetService("RunService")
-
-local WeatherEvent = ReplicatedStorage:FindFirstChild("WeatherChanged")
-if not WeatherEvent then
-	WeatherEvent = Instance.new("RemoteEvent")
-	WeatherEvent.Name = "WeatherChanged"
-	WeatherEvent.Parent = ReplicatedStorage
-end
-
-local WeatherController = {}
-
--- ---------- CONFIGURATION ----------
-local DAY_LENGTH = 300   -- 5 minutes
-local NIGHT_LENGTH = 300 -- 5 minutes
-local EVENT_ROLL_INTERVAL = 60 -- Roll the dice for a special event every 60 seconds
-
--- weight: Higher number = more likely. duration: How long the event lasts.
-local SpecialEvents = {
-	{ id = "Starfall",   weight = 15, duration = 180 }, -- 3 mins
-	{ id = "Corruption", weight = 10, duration = 240 }, -- 4 mins
-	{ id = "Eclipse",    weight = 5,  duration = 120 }, -- 2 mins (Rare)
-	{ id = "Hell",       weight = 2,  duration = 180 }, -- 3 mins (Super Rare)
-}
-local NO_EVENT_WEIGHT = 100 -- The chance that the roll fails and no event happens
-
--- ---------- STATE TRACKERS ----------
-local baseWeather = "Day"
-local baseTimer = DAY_LENGTH
-
-local activeEvent = nil
-local eventTimer = 0
-local rollTimer = EVENT_ROLL_INTERVAL
-
--- ---------- HELPER FUNCTIONS ----------
-local function BroadcastWeather(weatherName)
-	print("[WeatherController] Server weather changed to:", weatherName)
-	WeatherEvent:FireAllClients(weatherName)
-end
-
-local function RollForEvent()
-	-- If an event is already playing, don't roll a new one!
-	if activeEvent then return end 
-
-	local totalWeight = NO_EVENT_WEIGHT
-	for _, event in ipairs(SpecialEvents) do
-		totalWeight += event.weight
-	end
-
-	local roll = math.random(1, totalWeight)
-	local currentWeight = 0
-
-	for _, event in ipairs(SpecialEvents) do
-		currentWeight += event.weight
-		if roll <= currentWeight then
-			-- WE HIT AN EVENT!
-			activeEvent = event.id
-			eventTimer = event.duration
-			BroadcastWeather(activeEvent)
-			return
-		end
-	end
-	-- If it reaches here, it hit the NO_EVENT_WEIGHT. Nothing happens.
-end
-
--- ---------- MAIN SERVER LOOP ----------
--- Broadcast the starting weather immediately
-BroadcastWeather(baseWeather)
-
-RunService.Heartbeat:Connect(function(deltaTime)
-	-- 1. Progress the Day/Night Base Cycle
-	baseTimer -= deltaTime
-	if baseTimer <= 0 then
-		if baseWeather == "Day" then
-			baseWeather = "Night"
-			baseTimer = NIGHT_LENGTH
-		else
-			baseWeather = "Day"
-			baseTimer = DAY_LENGTH
-		end
-
-		-- Only broadcast the Day/Night change if there ISN'T a special event blocking it
-		if not activeEvent then
-			BroadcastWeather(baseWeather)
-		end
-	end
-
-	-- 2. Progress Active Special Events
-	if activeEvent then
-		eventTimer -= deltaTime
-		if eventTimer <= 0 then
-			-- The event finished! Revert back to whatever the base time of day is right now.
-			print("[WeatherController] Event ended. Reverting to base weather.")
-			activeEvent = nil
-			BroadcastWeather(baseWeather)
-		end
-	else
-		-- 3. If no event is active, count down to the next dice roll
-		rollTimer -= deltaTime
-		if rollTimer <= 0 then
-			rollTimer = EVENT_ROLL_INTERVAL
-			RollForEvent()
-		end
-	end
-end)
-
--- Allows your Aura Spawner to ask the server what the weather is right now!
-function WeatherController.GetCurrentWeather()
-	return activeEvent or baseWeather
-end
-
-return WeatherController
-
-cmdrServer:
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Cmdr = require(ReplicatedStorage.Modules.Cmdr)
@@ -1891,7 +1895,6 @@ Cmdr:RegisterDefaultCommands()
 Cmdr:RegisterHooksIn(ReplicatedStorage.Modules.Hooks)
 --Cmdr:RegisterCommandsIn(ReplicatedStorage.Modules.Cmdr.Commands)
 
-BoostManager:
 -- BoostManager
 -- Location: ServerScriptService > BoostManager (ModuleScript)
 --
@@ -2126,16 +2129,10 @@ end)
 
 return BoostManager
 
-GameManager:
--- GameManager
--- Location: ServerScriptService > GameManager (ModuleScript)
---
--- FIXES:
---   hasPrestigedThisArea now resets in WipePrestigeOnLoad AND WipeAreaOnLoad
---   AND WipeMoneyOnLoad. Any wipe = fresh prestige state.
---   All Phase 4 fields in DefaultData + safety net after wipes.
---   TutorialStepComplete handler at bottom.
-
+-- =====================================================================
+-- 3. MODULE: GameManager
+-- Location: ServerScriptService > GameManager
+-- =====================================================================
 local DataStoreService  = game:GetService("DataStoreService")
 local Players           = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -2153,49 +2150,23 @@ local function DefaultData()
 		totalEarned   = 0,
 		soulAuras     = 0,
 		prestigeCount = 0,
-
 		pendingAuras        = 0,
 		pendingPayout       = 0,
 		pendingBonusPayout  = 0,
 		lastPayout          = 0,
-
-		upgrades = {
-			dropRate           = 0,
-			blockValue         = 0,
-			habitatCapacity    = 0,
-			autoShipper        = 0,
-			mutationSpeed      = 0,
-			mutationTierChance = 0,
-			passiveTickSpeed   = 0,
-			hatcheryCapacity   = 0,
-		},
-
+		upgrades = { dropRate=0, blockValue=0, habitatCapacity=0, autoShipper=0, mutationSpeed=0, mutationTierChance=0, passiveTickSpeed=0, hatcheryCapacity=0 },
 		piggyBank       = 0,
 		piggyBankBroken = 0,
-
 		totalCubesProduced    = 0,
 		totalPlatformsShipped = 0,
 		totalLegendaryCubes   = 0,
-
 		missions = {},
-
-		settings = {
-			sfxEnabled   = true,
-			musicEnabled = true,
-		},
-
+		settings = { sfxEnabled=true, musicEnabled=true },
 		farmEvaluation = 0,
 		currentArea    = 1,
 		unlockedAreas  = { 1 },
-
 		goldenAuras = AdminConfig.GoldenAuraStart or 10,
-
-		boostInventory = {
-			AuraRush   = 0,
-			SpawnBoost = 0,
-			SoulBoost  = 0,
-		},
-
+		boostInventory = { AuraRush=0, SpawnBoost=0, SoulBoost=0 },
 		hasPrestigedThisArea = false,
 		epicUpgrades         = {},
 		tutorialProgress     = {},
@@ -2211,7 +2182,7 @@ local function DefaultRuntime()
 		cubeOrder      = {},
 		cubeCount      = 0,
 		nextCubeId     = 1,
-		totalMutatedValue = 0, -- NEW: Track the total value instantly
+		totalMutatedValue = 0,
 		lastActiveTime = tick(),
 		sessionStart   = tick(),
 	}
@@ -2226,11 +2197,8 @@ local function DeepMerge(saved, defaults)
 	for key, defaultValue in pairs(defaults) do
 		if saved[key] == nil then
 			saved[key] = defaultValue
-		elseif type(defaultValue) == "table" and type(saved[key]) == "table"
-			and not getmetatable(saved[key]) then
-			if defaultValue[1] == nil then
-				DeepMerge(saved[key], defaultValue)
-			end
+		elseif type(defaultValue) == "table" and type(saved[key]) == "table" and not getmetatable(saved[key]) then
+			if defaultValue[1] == nil then DeepMerge(saved[key], defaultValue) end
 		end
 	end
 end
@@ -2243,9 +2211,7 @@ local function EnsureUnlockedAreas(data)
 		if v == data.currentArea then hasCurrent = true end
 	end
 	if not has1 then table.insert(data.unlockedAreas, 1) end
-	if not hasCurrent and data.currentArea ~= 1 then
-		table.insert(data.unlockedAreas, data.currentArea)
-	end
+	if not hasCurrent and data.currentArea ~= 1 then table.insert(data.unlockedAreas, data.currentArea) end
 end
 
 local function SaveData(player)
@@ -2289,52 +2255,19 @@ local function LoadData(player)
 	local d = PlayerData[player.UserId]
 
 	if AdminConfig.WipeMoneyOnLoad then
-		d.currency           = 0
-		d.totalEarned        = 0
-		d.pendingAuras       = 0
-		d.pendingPayout      = 0
-		d.pendingBonusPayout = 0
-		d.lastPayout         = 0
+		d.currency=0; d.totalEarned=0; d.pendingAuras=0; d.pendingPayout=0; d.pendingBonusPayout=0; d.lastPayout=0
 		for k in pairs(d.upgrades) do d.upgrades[k] = 0 end
-		d.totalCubesProduced    = 0
-		d.totalPlatformsShipped = 0
-		d.totalLegendaryCubes   = 0
-		d.piggyBank             = 0
-		d.piggyBankBroken       = 0
-		d.farmEvaluation        = 0
-		d.goldenAuras           = AdminConfig.GoldenAuraStart or 10
-		d.boostInventory        = { AuraRush = 0, SpawnBoost = 0, SoulBoost = 0 }
-		d.hasPrestigedThisArea  = false   -- FIX: reset on money wipe
-		d.claimedMail = {}           -- ADD THIS: reset claimed mail
-		d.tutorialProgress = {}      -- ADD THIS: reset tutorial popups
-		d.tutorialComplete = false   -- ADD THIS: reset tutorial lockout
+		d.totalCubesProduced=0; d.totalPlatformsShipped=0; d.totalLegendaryCubes=0
+		d.piggyBank=0; d.piggyBankBroken=0; d.farmEvaluation=0; d.goldenAuras=AdminConfig.GoldenAuraStart or 10
+		d.boostInventory={ AuraRush=0, SpawnBoost=0, SoulBoost=0 }
+		d.hasPrestigedThisArea=false; d.claimedMail={}; d.tutorialProgress={}; d.tutorialComplete=false
 	end
 
-	if AdminConfig.WipePrestigeOnLoad then
-		d.soulAuras            = 0
-		d.prestigeCount        = 0
-		d.hasPrestigedThisArea = false   -- FIX: reset on prestige wipe
-	end
+	if AdminConfig.WipePrestigeOnLoad then d.soulAuras=0; d.prestigeCount=0; d.hasPrestigedThisArea=false end
+	if AdminConfig.WipeAreaOnLoad then d.currentArea=1; d.farmEvaluation=0; d.unlockedAreas={ 1 }; d.hasPrestigedThisArea=false end
+	if AdminConfig.WipeEpicOnLoad then d.GoldenAuras=0; d.epicUpgrades={} end
+	if AdminConfig.WipeAchievementsOnLoad then d.totalCubesProduced=0; d.totalLegendaryCubes=0; d.totalPlatformsShipped=0 end
 
-	if AdminConfig.WipeAreaOnLoad then
-		d.currentArea          = 1
-		d.farmEvaluation       = 0
-		d.unlockedAreas        = { 1 }
-		d.hasPrestigedThisArea = false   -- FIX: reset on area wipe
-	end
-	
-	if AdminConfig.WipeEpicOnLoad then
-		d.GoldenAuras = 0
-		d.epicUpgrades = {}
-	end
-	
-	if AdminConfig.WipeAchievementsOnLoad then
-		d.totalCubesProduced = 0
-		d.totalLegendaryCubes = 0
-		d.totalPlatformsShipped = 0
-	end
-
-	-- Safety: Phase 4 fields always exist, never wiped
 	if not d.epicUpgrades     then d.epicUpgrades     = {} end
 	if not d.tutorialProgress then d.tutorialProgress = {} end
 	if d.tutorialComplete == nil then d.tutorialComplete = false end
@@ -2349,57 +2282,31 @@ local function LoadData(player)
 	local tickCfg = UpgradeConfig.GetUpgradeConfig("passiveTickSpeed")
 	local passInt = (tickCfg and tickCfg.apply) and tickCfg.apply(d) or AdminConfig.PassiveInterval
 
+	local upgradesState = {}
+	for upgradeId, level in pairs(d.upgrades or {}) do upgradesState[upgradeId] = { level = level } end
+
 	ReplicatedStorage.RemoteEvents.UpdateHUD:FireClient(player, {
-		currency             = d.currency,
-		pendingAuras         = 0,
-		habitatCapacity      = habCap,
-		rate                 = 0,
-		passiveInterval      = passInt,
-		totalEarned          = d.totalEarned        or 0,
-		soulAuras            = d.soulAuras          or 0,
-		farmEvaluation       = d.farmEvaluation     or 0,
-		goldenAuras          = d.goldenAuras        or 0,
-		boostInventory       = d.boostInventory     or {},
-		settings             = d.settings           or {},
-		prestigeCount        = d.prestigeCount      or 0,
-		hasPrestigedThisArea = d.hasPrestigedThisArea or false,
-		tutorialProgress     = d.tutorialProgress   or {},
-		tutorialComplete     = d.tutorialComplete   or false,
-		epicUpgrades         = d.epicUpgrades       or {},
-		totalCubesProduced   = d.totalCubesProduced or 0,
-		currentArea          = d.currentArea or 1,
+		currency=d.currency, pendingAuras=0, habitatCapacity=habCap, rate=0, passiveInterval=passInt,
+		totalEarned=d.totalEarned or 0, soulAuras=d.soulAuras or 0, farmEvaluation=d.farmEvaluation or 0,
+		goldenAuras=d.goldenAuras or 0, boostInventory=d.boostInventory or {}, settings=d.settings or {},
+		prestigeCount=d.prestigeCount or 0, hasPrestigedThisArea=d.hasPrestigedThisArea or false,
+		tutorialProgress=d.tutorialProgress or {}, tutorialComplete=d.tutorialComplete or false,
+		epicUpgrades=d.epicUpgrades or {}, totalCubesProduced=d.totalCubesProduced or 0,
+		currentArea=d.currentArea or 1, upgrades=upgradesState,
 	})
 
-	-- FIX: Send UpgradeUpdated fullState so ShopController has data on join
-	-- This fires AFTER UpdateHUD so the shop has both currency AND upgrade state
-	-- FIX: Send UpgradeUpdated fullState so ShopController has data on join
 	task.delay(0.5, function()
 		if not player or not player.Parent then return end
 		local resetState = {}
-
-		-- SURGICAL FIX: Use Tiered Loop and New CalculateCost function
 		for tierNum, tierData in ipairs(UpgradeConfig.Tiers) do
 			for upgradeId, cfg in pairs(tierData.upgrades) do
 				local lv = d.upgrades[upgradeId] or 0
 				local maxed = lv >= cfg.maxLevel
-
-				resetState[upgradeId] = {
-					level    = lv,
-					maxLevel = cfg.maxLevel,
-					cost     = maxed and 0 or UpgradeConfig.CalculateCost(upgradeId, lv),
-					maxed    = maxed,
-				}
+				resetState[upgradeId] = { level=lv, maxLevel=cfg.maxLevel, cost=maxed and 0 or UpgradeConfig.CalculateCost(upgradeId, lv), maxed=maxed }
 			end
 		end
-
 		local UpgradeUpdated = ReplicatedStorage.RemoteEvents:FindFirstChild("UpgradeUpdated")
-		if UpgradeUpdated then
-			UpgradeUpdated:FireClient(player, {
-				type     = "fullState",
-				upgrades = resetState,
-				currency = d.currency,
-			})
-		end
+		if UpgradeUpdated then UpgradeUpdated:FireClient(player, { type="fullState", upgrades=resetState, currency=d.currency }) end
 	end)
 end
 
@@ -2408,10 +2315,7 @@ Players.PlayerRemoving:Connect(function(player)
 	local uid  = player.UserId
 	local data = PlayerData[uid]
 	if data then pcall(function() PlayerDB:SetAsync("Player_" .. uid, data) end) end
-	pendingSave[uid]   = nil
-	lastSaveTick[uid]  = nil
-	PlayerData[uid]    = nil
-	PlayerRuntime[uid] = nil
+	pendingSave[uid]=nil; lastSaveTick[uid]=nil; PlayerData[uid]=nil; PlayerRuntime[uid]=nil
 end)
 
 local lastPeriodicSave = tick()
@@ -2422,9 +2326,6 @@ game:GetService("RunService").Heartbeat:Connect(function()
 	end
 end)
 
----------------------------------------------------------------
--- TutorialStepComplete handler
----------------------------------------------------------------
 task.spawn(function()
 	local TutorialStepComplete = ReplicatedStorage.RemoteEvents:WaitForChild("TutorialStepComplete", 10)
 	if not TutorialStepComplete then return end
@@ -2433,19 +2334,12 @@ task.spawn(function()
 		local data = PlayerData[uid]
 		if not data then return end
 		if not data.tutorialProgress then data.tutorialProgress = {} end
-		if stepId == "__tutorialComplete__" then
-			data.tutorialComplete = true
-		elseif type(stepId) == "string" and #stepId < 100 then
-			data.tutorialProgress[stepId] = true
-		end
+		if stepId == "__tutorialComplete__" then data.tutorialComplete = true
+		elseif type(stepId) == "string" and #stepId < 100 then data.tutorialProgress[stepId] = true end
 	end)
 end)
 
----------------------------------------------------------------
--- Public API
----------------------------------------------------------------
 local GameManager = {}
-
 function GameManager.GetData(uid)    return PlayerData[uid]    end
 function GameManager.GetRuntime(uid) return PlayerRuntime[uid] end
 function GameManager.SavePlayer(p)   SaveData(p)               end
@@ -2479,12 +2373,8 @@ function GameManager.CollectOldestCubes(uid, count)
 			if needed > 0 then
 				table.insert(collected, cubeId)
 				table.insert(collectedCubes, runtime.cubes[cubeId])
-
-				-- 1. Grab the value BEFORE deleting it!
 				local valToRemove = MutationConfig.GetMutatedValue(runtime.cubes[cubeId])
 				runtime.totalMutatedValue -= valToRemove
-
-				-- 2. NOW delete it
 				runtime.cubes[cubeId] = nil
 				runtime.cubeCount -= 1
 				needed -= 1
@@ -2499,14 +2389,10 @@ end
 
 game:BindToClose(function()
 	print("[GameManager] Server shutting down. Forcing final save for all players...")
-	for _, player in ipairs(Players:GetPlayers()) do
-		SaveData(player)
-	end
-	task.wait(2) -- Give DataStoreService a moment to flush the queues
+	for _, player in ipairs(Players:GetPlayers()) do SaveData(player) end
+	task.wait(2) 
 end)
-
 return GameManager
-
 
 
 
