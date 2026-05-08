@@ -58,13 +58,11 @@ end
 
 return AchievementConfig
 
-
-
 local AdminConfig = {}
 
 AdminConfig.FireRate             = 0.25
 AdminConfig.BaseAuraValue        = 1
-AdminConfig.BaseHabitatCapacity  = 80
+AdminConfig.BaseHabitatCapacity  = 20
 AdminConfig.ShipInterval         = 30
 AdminConfig.TierOverride         = nil
 AdminConfig.WipeMoneyOnLoad      = true
@@ -74,7 +72,7 @@ AdminConfig.WipeAreaOnLoad       = true
 AdminConfig.WipeEpicOnLoad = true
 AdminConfig.AutoDispatch         = false
 
-AdminConfig.PlatformCapacity     = 20
+AdminConfig.PlatformCapacity     = 10
 AdminConfig.PlatformSpeed        = 20
 AdminConfig.PlatformHoverHeight  = 5
 AdminConfig.MaxTrucks            = 3
@@ -149,8 +147,6 @@ AdminConfig.PhysicsEliteGoldenChance = 10
 AdminConfig.PhysicsGoldenReward = 1
 
 return AdminConfig
-
-
 
 -- =====================================================================
 -- 1. MODULE: AreaRegistry
@@ -1435,7 +1431,7 @@ SoundConfig.PortalOpen  = "4459057403"
 SoundConfig.PortalEnter = ""
 
 --Tutorial Hints
-SoundConfig.TutorialHint = "123882484934579"      -- plays when tutorial popup appears
+SoundConfig.TutorialHint = "538769304"      -- plays when tutorial popup appears
 SoundConfig.GiftCollect  = ""      -- plays when collecting a gift drop
 ---------------------------------------------------------------
 -- AREA MUSIC
@@ -1510,317 +1506,342 @@ local TutorialConfig = {}
 
 TutorialConfig.TutorialEndArea = 5
 
-TutorialConfig.DefaultDuration = 4
-TutorialConfig.DefaultDelay    = 0
-TutorialConfig.DefaultColor    = Color3.fromRGB(255, 255, 255)
-TutorialConfig.DefaultIcon     = "rbxassetid://14914018910"
+-- The Ghost Hand / Pointer asset
+TutorialConfig.PointerImage = "rbxassetid://14922084401"
+TutorialConfig.PointerSize = UDim2.new(0, 75, 0, 75)
 
+-- Default Styling
+TutorialConfig.DefaultColor = Color3.fromRGB(100, 200, 255)
+TutorialConfig.DefaultIcon  = "rbxassetid://14914018910"
+
+-- THE FSM SEQUENCE
 TutorialConfig.Steps = {
 
-	-- ══════════ AREA 1: COMMON ══════════
-	-- CHAIN 1: The Spawning Loop
-	{
-		id           = "a1_hello",
-		area         = 1,
-		trigger      = "areaEnter",
-		title        = "Welcome to Aura Inc!",
-		body         = "Spam Click the Red Button to Produce Auras!",
-		target       = "ClickButton", 
-		isMandatory  = true, 
-		bannerPos    = "Center",
-		unlockUI     = {"ClickButton", "HatcheryBar", "CurrencyLabel", "RateLabel"},
-		nextStep     = "a1_hold", -- 💥 CHANGED: Skipped the cube hint. Straight to action.
-		icon         = "rbxassetid://14922082255",
+	-- ✨ STEP 1: Welcome & First Click
+	[1] = {
+		id           = "a1_welcome_click",
+		action       = "Action_ClickRedButton",
+		targetTag    = "Tutorial_ClickButton",
+
+		bannerTitle  = "Welcome to Aura Inc!",
+		bannerBody   = "Spam Click the Red Button below to produce your first Auras.",
+
+		icon         = "rbxassetid://14922082255", 
+		color        = Color3.fromRGB(143, 255, 131), -- Green
 	},
-	{
-		id           = "a1_hold",
-		area         = 1,
-		trigger      = "chain",
-		title        = "Hold For Multipliers",
-		body         = "Hold the Red Button! Higher multipliers = More Cash!",
-		target       = "ClickButton", 
-		isMandatory  = true, 
-		holdDuration = 1.5, 
-		bannerPos    = "Center",
-		nextStep     = "a1_mailbox", -- 💥 CHANGED: Skipped the 10-second wait hint.
+
+	-- ✨ STEP 2: Cinematic Camera Follow! Watch the Aura move.
+	[2] = {
+		id               = "a1_watch_aura",
+		action           = "Action_Wait",
+
+		cameraTrackMode  = "FollowAura", 
+		target3D         = "Aura",       
+		duration         = 10,          
+
+		bannerTitle  = "Generating Profit",
+		bannerBody   = "Each Aura generates cash every second based on its rarity.",
+
+		icon         = "rbxassetid://14914018910",
+		color        = Color3.fromRGB(255, 255, 255), -- Gold
+	},
+
+	-- ✨ STEP 3: Produce Bulk
+	[3] = {
+		id           = "a1_produce_25",
+		action       = "Action_ClickRedButton",
+		targetTag    = "Tutorial_ClickButton",
+
+		-- Look back at the general factory area
+		cameraTarget = "Tutorial_AuraHolderCam",
+
+		requireCubesProduced = 25,
+
+		bannerTitle  = "Producing Stock",
+		bannerBody   = "Keep clicking to produce 25 Auras! The more you make, the more money you earn.",
+		duration     = 0, 
+
+		icon         = "rbxassetid://14914018910",
+		color        = Color3.fromRGB(130, 226, 255), -- Cyan
+	},
+
+	-- ✨ STEP 4: Farm up Cash
+	[4] = {
+		id           = "a1_farm_150",
+		action       = "Action_ClickRedButton",
+
+		requireCurrency = 150,
+
+		bannerTitle  = "Stacking Cash",
+		bannerBody   = "Your Auras are passively generating income. Keep producing until you save up $150!",
+		duration     = 0,
+
 		icon         = "rbxassetid://14924185885",
-	},
-	{
-		id           = "a1_mailbox",
-		area         = 1,
-		trigger      = "chain",
-		title        = "Check The Mail!",
-		body         = "Click the MailBox to claim FREE Rewards!",
-		unlockUI     = "Mailbox",
-		isMandatory  = true, 
-		bannerPos    = "Center",
-		icon         = "rbxassetid://14921813212",
-		duration = 10
+		color        = Color3.fromRGB(150, 255, 150), -- Light Green
 	},
 
-	-- CHAIN 2: The Economy Loop
-	{
-		id           = "a1_habitat_full",
-		area         = 1,
-		trigger      = "habitatFull",
-		title        = "Your Habitat is Full!",
-		body         = "Your storage is full! Click the Blue Button to send a ship and FREE up SPACE!",
-		target       = "SendShipBtn", 
-		isMandatory  = true, 
-		bannerPos    = "Center",
-		unlockUI     = "SendShipBtn",  
-		nextStep     = "a1_ship_toggle", 
-		icon         = "rbxassetid://14914018910",
-	},
-	{
-		id           = "a1_ship_toggle",
-		area         = 1,
-		trigger      = "chain",
-		title        = "Automation",
-		body         = "Click here to toggle Auto-Shipping so you don't have to do it manually!",
-		target       = "ToggleShipBtn",
-		isMandatory  = true,
-		bannerPos    = "Center",
-		unlockUI     = "ModeToggle", 
-		nextStep     = "a1_buy_upgrade", 
-		icon         = "rbxassetid://14914018910",
-	},
-	{
-		id           = "a1_buy_upgrade",
-		area         = 1,
-		trigger      = "chain",
-		title        = "Research Shop",
-		body         = "Time to upgrade! Click the Shop Button.",
-		target       = "ShopButton",
-		unlockUI     = "ShopButton",
-		isMandatory  = true,
-		bannerPos    = "Center",
-		nextStep     = "a1_buy_first_upgrade", 
-		icon         = "rbxassetid://14917128076",
-	},
-	{
-		id           = "a1_buy_first_upgrade",
-		area         = 1,
-		trigger      = "chain",
-		title        = "Buy Your First Upgrade",
-		body         = "Click the green $50 button to increase your Aura Value!",
-		target       = "Buy_blockValue", 
-		bannerPos    = "Top",
-		isMandatory  = true, 
-		nextStep     = "a1_close_shop",
-		icon         = "rbxassetid://14914018910",
-	},
-	{
-		id           = "a1_close_shop",
-		area         = 1,
-		trigger      = "chain",
-		title        = "Close The Shop",
-		body         = "Click the Red X to close the shop.",
-		unlockUI     = "ShopCloseBtn",
-		isMandatory  = true, 
-		target       = "ShopCloseBtn", 
-		bannerPos    = "Top",
+	-- ✨ STEP 5: Unlock Shop
+	[5] = {
+		id           = "a1_open_shop",
+		action       = "Action_OpenShop",
+		targetTag    = "Tutorial_ShopButton",
+
+		unlockTags    = {"Tutorial_ShopButton"},
+		unlockActions = {"Action_OpenShop", "Action_CloseShop"},
+		-- ✨ FIX: Removed duration = 0 so it doesn't auto-skip!
+
+		bannerTitle  = "Open The Shop",
+		bannerBody   = "You have enough Money! Click the Shop icon to view your upgrades.",
+
 		icon         = "rbxassetid://14915225073",
-		-- Stops here and waits for them to hit 20,000 Eval
+		color        = Color3.fromRGB(200, 200, 200), -- Grey
 	},
-	
-	
 
-	-- CHAIN 3: Prestige and Progress
-	{
-		id           = "a1_try_prestige",
-		area         = 1,
-		trigger      = "farmEvalReached",
-		triggerValue = 20000,
-		title        = "Try Prestiging!",
-		body         = "Click the Prestige button to permanently multiply your earnings!",
-		target       = "PrestigeButton", 
-		isMandatory  = true, 
-		bannerPos    = "Center",
-		unlockUI     = {"MainPrestigeBtn", "SoulAuraDisplay"},
-		nextStep     = "a1_prestige_button",
+	-- ✨ STEP 6: First Upgrade
+	[6] = {
+		id             = "a1_buy_blockValue",
+		action         = "Action_BuyUpgrade",
+		targetTag      = "Tutorial_Buy_blockValue",
+
+		unlockTags     = {"Tutorial_Buy_blockValue"},
+		-- ✨ FIX: Removed duration = 0 so it doesn't auto-skip!
+
+		menuTag        = "Tutorial_ShopPanel",
+		menuOpenBtnTag = "Tutorial_ShopButton",
+
+		bannerTitle  = "Increase Value",
+		bannerBody   = "Buy the Value upgrade to increase the Value of your Auras!",
+
+		icon         = "rbxassetid://14917128076",
+		color        = Color3.fromRGB(142, 206, 255), 
+	},
+
+	-- ✨ STEP 7: The "Trap". Waiting for the physical bin to fill up.
+	[7] = {
+		id           = "a1_fill_habitat",
+		action       = "Action_ClickRedButton",
+		targetTag    = "Tutorial_ClickButton",
+
+		requireHabitatFull = true,
+		duration           = 0, 
+
+		bannerTitle  = "Keep Producing",
+		bannerBody   = "Close the shop and keep Producing Auras.",
+
+		icon         = "rbxassetid://14914018910",
+		color        = Color3.fromRGB(130, 226, 255), -- Cyan
+	},
+
+	-- ✨ STEP 8: Watch the Aura Die (Zoomed Out). 
+	[8] = {
+		id               = "a1_watch_aura_die",
+		action           = "Action_Wait",
+
+		cameraTrackMode  = "FollowAura",
+		cameraOffset     = Vector3.new(0, 22, 28), 
+
+		requireRateZero  = true, 
+		duration         = 0, 
+
+		bannerTitle  = "Incinerated!",
+		bannerBody   = "Since your habitat Got full, Auras get incinerated. Wait for your Rate to hit $0.",
+
 		icon         = "rbxassetid://14916846070",
+		color        = Color3.fromRGB(255, 0, 4), -- Red
 	},
-	{
-		id           = "a1_prestige_button",
-		area         = 1,
-		trigger      = "chain",
-		title        = "Prestige Now",
-		body         = "Prestige now to get your first permanent earnings increase!",
-		unlockUI     = {"PrestigeBtns", "PrestigeCloseBtn"},
-		isMandatory  = true, 
-		target       = "PrestigeBtns", 
-		bannerPos    = "Top",
-		icon         = "rbxassetid://14923411730",
-		nextStep     = "a1_close_prestige",
+
+	-- ✨ STEP 9: Pan to Habitat to show the full bin
+	[9] = {
+		id           = "a1_look_at_habitat",
+		action       = "Action_Wait",
+		cameraTarget = "Tutorial_HabitatCam",
+
+		duration     = 10, 
+
+		bannerTitle  = "Habitat is Full!",
+		bannerBody   = "Your storage is completely Full. You need to clear some Space.",
+
+		icon         = "rbxassetid://14916846070",
+		color        = Color3.fromRGB(255, 155, 155), -- Red
 	},
-	{
-		id           = "a1_progress",
-		area         = 1,
-		trigger      = "farmEvalReached",        
-		triggerValue = 50000,                    
-		title        = "Next Area Unlocked",
-		body         = "Click the Travel button to move to the next area!",
-		unlockUI     = {"AreaTravelButton", "PortalCloseBtn"},
-		target       = "AreaTravelButton", 
-		isMandatory  = true, 
-		requirePrestige = true,                  
-		requireStep  = "a1_prestige_button",    
-		bannerPos    = "Center",
-		nextStep     = "a1_arrow_button",        
-		icon         = "rbxassetid://14914000799",
+
+	-- ✨ STEP 10: The Solution (Send Button)
+	[10] = {
+		id           = "a1_send_ship",
+		action       = "Action_SendShip",
+		targetTag    = "Tutorial_SendShipBtn",
+
+		unlockTags    = {"Tutorial_SendShipBtn"},
+		unlockActions = {"Action_SendShip"},
+
+		bannerTitle  = "Clear Space",
+		bannerBody   = "Click the newly unlocked SEND button to clear out your habitat of the Auras.",
+
+		icon         = "rbxassetid://14915225073",
+		color        = Color3.fromRGB(100, 255, 255), -- Cyan
 	},
-	{
-		id           = "a1_arrow_button",
-		area         = 1,
-		trigger      = "chain",
-		title        = "Select The Area",
-		body         = "Click the arrow to view the Uncommon Area!",
-		target       = "ArrowBtn",
-		isMandatory  = true, 
-		bannerPos    = "Top",
-		unlockUI     = "ArrowBtn",
-		nextStep     = "a1_next_area",
+
+	-- ✨ STEP 11: Watch the Ship!
+	[11] = {
+		id           = "a1_wait_for_ship",
+		action       = "Action_Wait",
+		cameraTarget = "Tutorial_ShippingCam",
+
+		requirePlatformsShipped = 2,
+
+		bannerTitle  = "Ship Delivery",
+		bannerBody   = "Ships collect all your Auras and pay out the cash directly to your wallet. Send 2 Ships Out.",
+		duration     = 0,
+
 		icon         = "rbxassetid://14914018910",
+		color        = Color3.fromRGB(150, 200, 255), -- Light Blue
 	},
-	{
-		id           = "a1_next_area",
-		area         = 1,
-		trigger      = "chain",
-		title        = "Uncommon Area",
-		body         = "Click Travel to progress to the Uncommon Area!",
-		target       = "TravelBtn",
-		unlockUI     = {"TravelBtn", "PortalCloseBtn"},
-		isMandatory  = true, 
-		icon         = "rbxassetid://14914018910",
+
+	-- ✨ STEP 12: Automate it
+	[12] = {
+		id           = "a1_toggle_auto",
+		action       = "Action_ToggleAutoShip",
+		targetTag    = "Tutorial_ToggleShipBtn",
+
+		unlockTags    = {"Tutorial_ToggleShipBtn"},
+		unlockActions = {"Action_ToggleAutoShip"},
+
+		bannerTitle  = "Automate Ships",
+		bannerBody   = "Click the new Toggle Button to automate your shipments!",
+
+		icon         = "rbxassetid://14915225073",
+		color        = Color3.fromRGB(50, 150, 50), -- Dark Green
 	},
-	{
-		id           = "a1_stuck_prestige",
-		area         = 1,
-		trigger      = "timerElapsed",
-		triggerValue = 600,
-		title        = "Keep Going!",
-		body         = "If you feel stuck make sure to prestige and Upgrade more. Also Use Boosts To Help escpecially the Value Booster!",
+
+	-- ✨ STEP 13: Business as usual
+	[13] = {
+		id           = "a1_farm_500",
+		action       = "Action_ClickRedButton",
+
+		requireCurrency = 500,
+
+		bannerTitle  = "More Upgrades!",
+		bannerBody   = "Make $500 to afford your next upgrade.",
+		duration     = 0,
+
+		icon         = "rbxassetid://14924185885",
+		color        = Color3.fromRGB(150, 255, 150), -- Light Green
 	},
-	
 
+	[14] = {
+		id             = "a1_buy_auraExpansion",
+		action         = "Action_BuyUpgrade",
+		targetTag      = "Tutorial_Buy_hatcheryCapacity",
 
-	---- ══════════ AREA 2: UNCOMMON ══════════
-	--{
-	--	id           = "a2_welcome",
-	--	area         = 2,
-	--	trigger      = "areaEnter",
-	--	title        = "How To Boost",
-	--	body         = "Click On The Boost Button",
-	--	target       = "BoostsButton", 
-	--	isMandatory  = true, 
-	--	bannerPos    = "Center",
-	--	unlockUI = 		"BoostsButton",
-	--	nextStep     = "a2_click_boost",
-	--	icon = "rbxassetid://14914018910",
-	--},
+		unlockTags     = {"Tutorial_Buy_hatcheryCapacity"},
 
-	--{
-	--	id           = "a2_click_boost",
-	--	area         = 2,
-	--	trigger      = "chain",
-	--	delay        = 10,
-	--	title        = "Buy A Spawn Speed Boost",
-	--	body         = "Use your GOLDEN AURAS to BUY this BOOST",
-	--	isMandatory  = true, 
-	--	target       = "BoostsButton", 
-	--	unlockUI = 		"BoostsButton",
-	--	icon = "rbxassetid://14914018910",
+		menuTag        = "Tutorial_ShopPanel",
+		menuOpenBtnTag = "Tutorial_ShopButton",
 
-	--},
+		bannerTitle  = "More Hatchery",
+		bannerBody   = "Buy the Aura Expansion upgrade to increase your Hatchery space!",
 
+		icon         = "rbxassetid://14917128076",
+		color        = Color3.fromRGB(105, 255, 250), 
+	},
 
-	-- ══════════ AREA 3: RARE ══════════
-	-- CHAIN 4: Golden Bank 
-	--{
-	--	id           = "a3_golden_auras",
-	--	area         = 3,
-	--	trigger      = "areaEnter",
-	--	title        = "Placeholder Title 21",
-	--	body         = "Placeholder text for step 21.",
-	--	nextStep     = "a3_golden_aura_bank",
-	--},
-	--{
-	--	id           = "a3_golden_aura_bank",
-	--	area         = 3,
-	--	trigger      = "chain",
-	--	title        = "Placeholder Title 22",
-	--	body         = "Placeholder text for step 22.",
-	--	cameraTarget = "GoldenBankModel", -- Replace with actual model name
-	--	nextStep     = "a3_golden_aura_break",
-	--},
-	--{
-	--	id           = "a3_golden_aura_break",
-	--	area         = 3,
-	--	trigger      = "chain",
-	--	title        = "Placeholder Title 23",
-	--	body         = "Placeholder text for step 23.",
-	--	cameraTarget = "GoldenBankModel",
-	--	nextStep     = "a3_epic_research",
-	--},
+	[15] = {
+		id           = "a1_farm_1500",
+		action       = "Action_ClickRedButton",
 
+		requireCurrency = 2000,
 
-	-- ══════════ AREA 4: EPIC ══════════
-	-- AREA 4 EVENTS EPIC RESEARCH HERE
-	--{
-	--	id           = "a4_welcome",
-	--	area         = 4,
-	--	trigger      = "areaEnter",
-	--	title        = "Placeholder Title 25",
-	--	body         = "Placeholder text for step 25.",
-	--},
-	--{
-	--	id           = "a4_boost_hint",
-	--	area         = 4,
-	--	trigger      = "currencyReached",
-	--	triggerValue = 5000,
-	--	title        = "Placeholder Title 26",
-	--	body         = "Placeholder text for step 26.",
-	--},
-	--{
-	--	id           = "a4_combo_boost",
-	--	area         = 4,
-	--	trigger      = "boostActivated",
-	--	title        = "Placeholder Title 27",
-	--	body         = "Placeholder text for step 27.",
-	--},
+		bannerTitle  = "Growing the Factory",
+		bannerBody   = "Make $2000 to afford the Habitat upgrade, allowing you to store more auras!",
+		duration     = 0,
 
+		icon         = "rbxassetid://14924185885",
+		color        = Color3.fromRGB(87, 255, 98),
+	},
 
-	-- ══════════ AREA 5: LEGENDARY ══════════
---	-- AREA 5 EVENTS
---	{
---		id           = "a5_welcome",
---		area         = 5,
---		trigger      = "areaEnter",
---		title        = "Placeholder Title 28",
---		body         = "Placeholder text for step 28.",
---	},
---	{
---		id           = "a5_graduation",
---		area         = 5,
---		trigger      = "portalReady",
---		title        = "Placeholder Title 29",
---		body         = "Placeholder text for step 29.",
---	},
+	[16] = {
+		id             = "a1_buy_habitatCapacity",
+		action         = "Action_BuyUpgrade",
+		targetTag      = "Tutorial_Buy_habitatCapacity",
+
+		unlockTags     = {"Tutorial_Buy_habitatCapacity"},
+
+		menuTag        = "Tutorial_ShopPanel",
+		menuOpenBtnTag = "Tutorial_ShopButton",
+
+		bannerTitle  = "More Habitat Space",
+		bannerBody   = "Buy the Habitat Reservoir to store more auras before they get Incinirated!",
+
+		icon         = "rbxassetid://14917128076",
+		color        = Color3.fromRGB(120, 248, 255),
+	},
+
+	[17] = {
+		id           = "a1_multiply",
+		action       = "Action_ClickRedButton",
+
+		reachMultiplier = 5,
+
+		bannerTitle  = "Hatchery Multipliers",
+		bannerBody   = "Hold the Red button to reach the legendary multiplier!",
+		duration     = 0,
+
+		icon         = "rbxassetid://14924185885",
+		color        = Color3.fromRGB(255, 255, 0), 
+	},
+
+	[18] = {
+		id           = "a1_farm_25000",
+		action       = "Action_ClickRedButton",
+
+		requireCurrency = 25000,
+
+		bannerTitle  = "Mythic Multiplier",
+		bannerBody   = "Multipliers Increase Ship and Aura Value. Save up $25,000 to afford the Mythic Multiplier!",
+		duration     = 0,
+
+		icon         = "rbxassetid://14924185885",
+		color        = Color3.fromRGB(137, 255, 110), -- White
+	},
+
+	[19] = {
+		id             = "a1_buy_mythicMult",
+		action         = "Action_BuyUpgrade",
+		targetTag      = "Tutorial_Buy_unlockMythicMult", 
+
+		unlockTags     = {"Tutorial_Buy_unlockMythicMult"},
+
+		menuTag        = "Tutorial_ShopPanel",
+		menuOpenBtnTag = "Tutorial_ShopButton",
+
+		bannerTitle  = "Mythic Multiplier",
+		bannerBody   = "Buy the Mythic Multiplier to hold past the legendary multiplier limit!",
+
+		icon         = "rbxassetid://14917128076",
+		color        = Color3.fromRGB(80, 246, 255),
+	},
+
+	[20] = {
+		id           = "a1_open_prestige",
+		action       = "Action_OpenPrestige",
+		targetTag    = "Tutorial_PrestigeButton",
+
+		unlockTags    = {"Tutorial_PrestigeButton", "Tutorial_PrestigeConfirm", "Tutorial_PrestigeCloseBtn"},
+		unlockActions = {"Action_OpenPrestige", "Action_ClosePrestige", "Action_PrestigeConfirm"},
+
+		bannerTitle  = "Time to Prestige",
+		bannerBody   = "You've grown enough! Click the Prestige button to start anew with a massive permanent multiplier.",
+
+		icon         = "rbxassetid://14916846070",
+		color        = Color3.fromRGB(180, 100, 255), -- Purple
+	}
 }
 
----------------------------------------------------------------
--- HELPERS
----------------------------------------------------------------
-function TutorialConfig.GetStepsForArea(area)
-	local result = {}
-	for _, step in ipairs(TutorialConfig.Steps) do
-		if step.area == area then table.insert(result, step) end
-	end
-	return result
+function TutorialConfig.GetStepByIndex(index)
+	return TutorialConfig.Steps[index]
 end
 
-function TutorialConfig.GetStep(id)
+function TutorialConfig.GetStepById(id)
 	for _, step in ipairs(TutorialConfig.Steps) do
 		if step.id == id then return step end
 	end
@@ -1828,8 +1849,6 @@ function TutorialConfig.GetStep(id)
 end
 
 return TutorialConfig
-
-
 
 -- UIConfig
 -- Location: ReplicatedStorage > Modules > UIConfig
@@ -2198,33 +2217,33 @@ UpgradeConfig.Tiers = {
 		upgrades = {
 			blockValue = {
 				baseCost = 50, 
-				costScale = 1.05, 
+				costScale = 1.03, 
 				maxLevel = 100,
 				apply = function(data) 
 					local lv = (data.upgrades and data.upgrades.blockValue) or 0
-					return (lv * 0.2) 
+					return (lv * 0.02) 
 				end,
-				displayName = "Glow Enhancement", -- (Fixed typo here too!)
-				description = "Increases base aura value by +20%", 
+				displayName = "Glow Enhancement",
+				description = "Increases base aura value by +2%", 
 				iconId = "rbxassetid://14917130166",
 			},
 			hatcheryCapacity = {
-				baseCost = 100, costScale = 1.1, maxLevel = 50,
+				baseCost = 500, costScale = 1.02, maxLevel = 50,
 				apply = function(data) return (AdminConfig.HatcheryMax or 100) + (((data.upgrades and data.upgrades.hatcheryCapacity) or 0) * 1) end,
-				displayName = "Hatchery Expansion", description = "Increases the max capacity of your Hatchery by 1", iconId = "rbxassetid://14923548733",
+				displayName = "Aura Expansion", description = "Increases the max capacity of your Hatchery by 1", iconId = "rbxassetid://14923548733",
 			},
 			habitatCapacity = {
-				baseCost = 1500, costScale = 1.2, maxLevel = 20,
-				apply = function(data) return (AdminConfig.BaseHabitatCapacity or 50) + (((data.upgrades and data.upgrades.habitatCapacity) or 0) * 10) end,
-				displayName = "Habitat Reservoir", description = "Increase habitat capacity by 10", iconId = "rbxassetid://14915711292",
+				baseCost = 1000, costScale = 1.05, maxLevel = 25,
+				apply = function(data) return (AdminConfig.BaseHabitatCapacity or 50) + (((data.upgrades and data.upgrades.habitatCapacity) or 0) * 2) end,
+				displayName = "Habitat Reservoir", description = "Increase habitat capacity by 2", iconId = "rbxassetid://14915711292",
 			},
 			unlockMythicMult = { 
 				baseCost = 25000, costScale = 1, maxLevel = 1, 
 				apply = function(data) return ((data.upgrades and data.upgrades.unlockMythicMult) or 0) == 1 end,
-				displayName = "Mythic Multi",
+				displayName = "Mythic Multiplier",
 				description = "Allows you to hold past the legendary multiplier! Unlocks the " .. (AdminConfig.MilestoneData[6] and AdminConfig.MilestoneData[6].name or "MYTHIC") .. " tier!",
 				iconId = "rbxassetid://14921959974",
-			},
+			}, --176 total max upgrades
 		}
 	},
 	[2] = {
@@ -2233,36 +2252,19 @@ UpgradeConfig.Tiers = {
 		upgrades = {
 			blockValueT2 = {
 				baseCost = 1000, costScale = 1.2, maxLevel = 125,
-				apply = function(data) return (((data.upgrades and data.upgrades.blockValueT2) or 0) * 0.15) end,
-				displayName = "Increased Aura Pulse", description = "Increased aura value by +15%", iconId = "rbxassetid://14923455396",
+				apply = function(data) return (((data.upgrades and data.upgrades.blockValueT2) or 0) * 0.05) end,
+				displayName = "Faster Aura Pulse", description = "Increased aura value by +5%", iconId = "rbxassetid://14923455396",
 			},
 			passiveTickSpeedT2 = {
-				baseCost = 20000, costScale = 1.45, maxLevel = 20,
-				apply = function(data) return (((data.upgrades and data.upgrades.passiveTickSpeedT2) or 0) * 0.15) end,
-				displayName = "Advanced Aura Generation", description = "Reduces passive tick speed by 15%", iconId = "rbxassetid://14921959974",
-			},
-			multiplierSpeed = {
-				baseCost = 5000, costScale = 1.5, maxLevel = 5,
-				apply = function(data) return 1 + (((data.upgrades and data.upgrades.multiplierSpeed) or 0) * 0.05) end,
-				displayName = "Multiplier Speed", description = "Increases how fast your multiplier builds up by 5%.", iconId = "rbxassetid://14921959974",
-			},			
-			shipCooldown = {
-				baseCost = 1500, costScale = 1.4, maxLevel = 10,
-				apply = function(data) return 15 - (((data.upgrades and data.upgrades.shipCooldown) or 0) * 1) end,
-				displayName = "Hyper-Drive Engines", description = "Reduces the manual ship cooldown by 1 second.",
-			},
-			-- ✨ NEW: Ship Capacity
+				baseCost = 20000, costScale = 1.45, maxLevel = 5,
+				apply = function(data) return (((data.upgrades and data.upgrades.passiveTickSpeedT2) or 0) * 0.05) end,
+				displayName = "Advanced Aura Generation", description = "Increases Passive Value Of Auras by 5%", iconId = "rbxassetid://14921959974",
+			},	
 			shipCapacityT1 = {
 				baseCost = 8000, costScale = 1.25, maxLevel = 25,
-				apply = function(data) return ((data.upgrades and data.upgrades.shipCapacityT1) or 0) * 50 end,
-				displayName = "Cargo Expansion", description = "Increases the max auras a ship can carry by 50.",
-			},
-			-- ✨ NEW: Golden Aura Drop Chance
-			goldenChanceT1 = {
-				baseCost = 15000, costScale = 1.5, maxLevel = 10,
-				apply = function(data) return ((data.upgrades and data.upgrades.goldenChanceT1) or 0) * 0.5 end,
-				displayName = "Golden Luck", description = "Increases base chance to find Golden Auras by 0.5%.",
-			},
+				apply = function(data) return ((data.upgrades and data.upgrades.shipCapacityT1) or 0) * 1 end,
+				displayName = "Shipping Expansion", description = "Increases the max auras a ship can carry by 1.",
+			}, --155 total max upgrades
 		}
 	},
 	[3] = {
@@ -2270,31 +2272,25 @@ UpgradeConfig.Tiers = {
 		unlockRequirement = 150, 
 		upgrades = {
 			auraValueT3 = {
-				baseCost = 250000, costScale = 1.15, maxLevel = 150,
+				baseCost = 250000, costScale = 1.15, maxLevel = 4,
 				apply = function(data) return (((data.upgrades and data.upgrades.auraValueT3) or 0) * 0.25) end,
-				displayName = "Aura Purifier", description = "Purifies Your Auras for more value +25%",
+				displayName = "Aura Purifier", description = "Purifies Your Auras, Increases Value by 25%",
 			},
 			hatcheryT3 = {
 				baseCost = 750000, costScale = 1.3, maxLevel = 25,
-				apply = function(data) return (((data.upgrades and data.upgrades.hatcheryT3) or 0) * 50) end,
-				displayName = "Sub-Atomic Breeding", description = "Uses quantum physics to pack 50 more auras into the hatchery.",
+				apply = function(data) return (((data.upgrades and data.upgrades.hatcheryT3) or 0) * 2) end,
+				displayName = "Increased Hatchery", description = "Provides even more hatchery space for more auras by 2",
 			},
 			habitatT3 = {
 				baseCost = 2000000, costScale = 1.4, maxLevel = 15,
-				apply = function(data) return (((data.upgrades and data.upgrades.habitatT3) or 0) * 500) end,
-				displayName = "Dimensional Pocketing", description = "Folds space-time within your habitats to add 500 capacity.",
+				apply = function(data) return (((data.upgrades and data.upgrades.habitatT3) or 0) * 10) end,
+				displayName = "Industrial Packaging", description = "Increases Habitat Capacity by 10",
 			},
-			passiveSpeedT3 = {
-				baseCost = 5000000, costScale = 1.5, maxLevel = 10,
-				apply = function(data) return (((data.upgrades and data.upgrades.passiveSpeedT3) or 0) * 0.2) end,
-				displayName = "Temporal Overclock", description = "Spawners now operate in a fast-forward time stream (-20% delay).",
-			},
-			-- ✨ NEW: Offline Earnings
-			offlineEarningsT1 = {
-				baseCost = 1000000, costScale = 1.3, maxLevel = 20,
-				apply = function(data) return 1 + (((data.upgrades and data.upgrades.offlineEarningsT1) or 0) * 0.1) end,
-				displayName = "Idle Automation", description = "Increases offline/away earnings by 10%.",
-			},
+			droneFrequency = {
+				baseCost = 500000, costScale = 1.4, maxLevel = 25,
+				apply = function(data) return ((data.upgrades and data.upgrades.droneFrequency) or 0) * 1 end,
+				displayName = "Unstable Area", description = "Random Aura Shots appear more frequently. 1% higher chance for more.",
+			},--69 total max upgrades
 		}
 	},
 	[4] = {
@@ -2302,27 +2298,21 @@ UpgradeConfig.Tiers = {
 		unlockRequirement = 225, 
 		upgrades = {
 			auraValueT4 = {
-				baseCost = 15000000, costScale = 1.25, maxLevel = 100,
-				apply = function(data) return ((data.upgrades and data.upgrades.auraValueT4) or 0) * 1.5 end,
-				displayName = "Quantum State Auras", description = "Auras exist in multiple states, increasing value by +150% per level.",
+				baseCost = 15000000, costScale = 1.25, maxLevel = 250,
+				apply = function(data) return ((data.upgrades and data.upgrades.auraValueT4) or 0) * 0.01 end,
+				displayName = "Shinier Auras", description = "Auras Shine Brighter and increase value by 1%",
 			},
 			hatcheryT4 = {
-				baseCost = 40000000, costScale = 1.35, maxLevel = 50,
-				apply = function(data) return ((data.upgrades and data.upgrades.hatcheryT4) or 0) * 250 end,
-				displayName = "Schrodinger's Hatchery", description = "Hatchery holds both auras and no auras (+250 capacity).",
+				baseCost = 40000000, costScale = 1.35, maxLevel = 20,
+				apply = function(data) return ((data.upgrades and data.upgrades.hatcheryT4) or 0) * 5 end,
+				displayName = "Advanced Hatchery", description = "Increases Hatchery by 5",
 			},
-			-- ✨ NEW: Elite Aura Chance
 			eliteSpawnChance = {
 				baseCost = 25000000, costScale = 1.4, maxLevel = 25,
 				apply = function(data) return ((data.upgrades and data.upgrades.eliteSpawnChance) or 0) * 1.0 end,
-				displayName = "Mutated Genetics", description = "Increases the chance of an Elite Aura spawning by 1%.",
+				displayName = "Luckier Shots", description = "Increases the chance of an Elite Aura spawning by 1%.",
 			},
-			-- ✨ NEW: Drone/Drop frequency
-			droneFrequency = {
-				baseCost = 50000000, costScale = 1.4, maxLevel = 25,
-				apply = function(data) return ((data.upgrades and data.upgrades.droneFrequency) or 0) * 2 end,
-				displayName = "Care Package Routing", description = "Random sky drops appear 2% more frequently.",
-			},
+			
 		}
 	},
 	[5] = {
@@ -2591,3 +2581,4 @@ local WeatherConfig = {
 }
 
 return WeatherConfig
+
